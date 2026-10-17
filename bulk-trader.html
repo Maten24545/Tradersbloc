@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bulk Trader — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .bulk-layout { display: flex; flex-direction: column; height: 100%; background: var(--surface-primary); }
+    .bulk-toolbar {
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--space-3) var(--space-4);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .toolbar-left { display: flex; gap: var(--space-2); align-items: center; }
+    .toolbar-right { display: flex; gap: var(--space-4); align-items: center; font-size: var(--text-sm); color: var(--text-secondary); }
+    .toolbar-right strong { color: var(--accent-emerald); font-variant-numeric: tabular-nums; }
+    .bulk-table-container { flex: 1; overflow: auto; background: var(--surface-primary); }
+    .bulk-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    .bulk-table thead { position: sticky; top: 0; z-index: 10; }
+    .bulk-table th {
+      padding: var(--space-3) var(--space-4); text-align: left;
+      color: var(--text-tertiary); font-weight: 600; font-size: var(--text-xs);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      background: var(--surface-elevated); border-bottom: 1px solid var(--border-default);
+    }
+    .bulk-table td {
+      padding: var(--space-2) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--surface-elevated);
+    }
+    .bulk-table tbody tr:hover td { background: var(--surface-secondary); }
+    .bulk-table tr.selected td { background: var(--accent-blue-subtle); }
+    .cell-input {
+      width: 100%; padding: var(--space-1) var(--space-2);
+      background: var(--surface-secondary); border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: var(--text-sm); font-variant-numeric: tabular-nums;
+    }
+    .cell-input:focus { outline: none; border-color: var(--accent-emerald); }
+    .cell-select {
+      padding: var(--space-1) var(--space-2);
+      background: var(--surface-secondary); border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm); color: var(--text-primary); font-size: var(--text-sm);
+    }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: var(--radius-sm); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; }
+    .status-badge.ready { background: var(--state-positive-bg); color: var(--state-positive); }
+    .status-badge.pending { background: var(--state-warning-bg); color: var(--state-warning); }
+    .status-badge.error { background: var(--state-negative-bg); color: var(--state-negative); }
+    .action-btn {
+      padding: 3px 8px; border: none; border-radius: var(--radius-sm);
+      font-size: var(--text-xs); font-weight: 600; cursor: pointer;
+    }
+    .action-btn.duplicate { background: var(--accent-blue-subtle); color: var(--accent-blue); }
+    .action-btn.delete { background: var(--state-negative-bg); color: var(--state-negative); }
+    .bulk-footer {
+      padding: var(--space-3) var(--space-4);
+      background: var(--surface-elevated);
+      border-top: 1px solid var(--border-subtle);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-info { font-size: var(--text-sm); color: var(--text-secondary); }
+    .footer-info strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .footer-actions { display: flex; gap: var(--space-3); }
+    .import-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .import-modal.active { display: flex; }
+    .modal-card { background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-xl); padding: var(--space-8); max-width: 480px; width: 90%; }
+    .modal-title { font-size: var(--text-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 var(--space-5) 0; }
+    .upload-area { border: 2px dashed var(--border-default); border-radius: var(--radius-lg); padding: var(--space-10); text-align: center; cursor: pointer; transition: all var(--transition-fast); }
+    .upload-area:hover { border-color: var(--accent-emerald); background: var(--surface-secondary); }
+    .upload-area.dragover { border-color: var(--accent-emerald); background: var(--accent-emerald-subtle); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar">
+      <div class="topbar-left"><button class="sidebar-toggle"><i data-lucide="menu"></i></button><img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/><span class="topbar-brand">Tradersbloc</span></div>
+      <div class="topbar-center"><span class="topbar-title">Bulk Order Editor</span></div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-secondary" onclick="openImportModal()"><i data-lucide="upload" style="width:14px;height:14px;"></i> Import CSV</button>
+        <button class="btn btn-sm btn-secondary" onclick="exportCSV()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button>
+        <button class="btn btn-sm btn-primary" onclick="addNewRow()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Order</button>
+      </div>
+    </header>
+    <aside class="sidebar"><nav class="sidebar-nav" id="sidebarNav"></nav></aside>
+    <main class="main-content">
+      <div class="bulk-layout">
+        <div class="bulk-toolbar">
+          <div class="toolbar-left">
+            <button class="btn btn-sm btn-ghost" onclick="selectAll()">Select All</button>
+            <button class="btn btn-sm btn-ghost" onclick="deselectAll()">Deselect</button>
+            <button class="btn btn-sm btn-ghost" style="color: var(--state-negative);" onclick="deleteSelected()">Delete Selected</button>
+            <button class="btn btn-sm btn-ghost" onclick="validateAll()">Validate All</button>
+          </div>
+          <div class="toolbar-right">
+            <span>Total Orders: <strong id="orderCount">0</strong></span>
+            <span>Selected: <strong id="selectedCount">0</strong></span>
+          </div>
+        </div>
+        <div class="bulk-table-container">
+          <table class="bulk-table">
+            <thead><tr>
+              <th style="width:40px"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th>
+              <th>Symbol</th><th>Side</th><th>Type</th><th>Quantity</th><th>Price</th><th>Stop Loss</th><th>Take Profit</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="ordersTableBody"></tbody>
+          </table>
+        </div>
+        <div class="bulk-footer">
+          <div class="footer-info">Total Order Value: <strong id="totalValue">$0.00</strong></div>
+          <div class="footer-actions">
+            <button class="btn btn-sm btn-ghost" onclick="clearAll()">Clear All</button>
+            <button class="btn btn-sm btn-primary" onclick="executeOrders()"><i data-lucide="zap" style="width:14px;height:14px;"></i> Execute All Orders</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="import-modal" id="importModal">
+    <div class="modal-card">
+      <h2 class="modal-title">Import Orders from CSV</h2>
+      <div class="upload-area" id="uploadArea">
+        <i data-lucide="file-upload" style="width:48px;height:48px;color:var(--text-tertiary);margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"></i>
+        <p style="margin:0;color:var(--text-primary);font-weight:600;">Drag & drop CSV file here</p>
+        <p style="margin:8px 0 0 0;font-size:var(--text-sm);color:var(--text-secondary);">or click to browse</p>
+        <input type="file" accept=".csv" id="fileInput" style="display:none" onchange="handleFileSelect(event)">
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button class="btn btn-sm btn-secondary" style="flex:1" onclick="closeImportModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <script src="shared-components.js"></script>
+  <script>
+    lucide.createIcons();
+    let orders = []; let orderIdCounter = 1;
+    function initializeSampleData() {
+      orders = [
+        { id: orderIdCounter++, symbol: 'BTC/USDT', side: 'buy', type: 'limit', quantity: 0.5, price: 43000, stopLoss: 42000, takeProfit: 45000, status: 'ready', selected: false },
+        { id: orderIdCounter++, symbol: 'ETH/USDT', side: 'buy', type: 'limit', quantity: 5, price: 2400, stopLoss: 2300, takeProfit: 2600, status: 'ready', selected: false },
+        { id: orderIdCounter++, symbol: 'SOL/USDT', side: 'sell', type: 'market', quantity: 50, price: 0, stopLoss: 0, takeProfit: 0, status: 'ready', selected: false }
+      ];
+      renderTable();
+    }
+    function renderTable() {
+      document.getElementById('ordersTableBody').innerHTML = orders.map(order => `
+        <tr class="${order.selected ? 'selected' : ''}" data-id="${order.id}">
+          <td><input type="checkbox" ${order.selected ? 'checked' : ''} onchange="toggleRowSelection(${order.id})"></td>
+          <td><input type="text" class="cell-input" value="${order.symbol}" onchange="updateOrder(${order.id}, 'symbol', this.value)"></td>
+          <td><select class="cell-select" onchange="updateOrder(${order.id}, 'side', this.value)"><option value="buy" ${order.side === 'buy' ? 'selected' : ''}>Buy</option><option value="sell" ${order.side === 'sell' ? 'selected' : ''}>Sell</option></select></td>
+          <td><select class="cell-select" onchange="updateOrder(${order.id}, 'type', this.value)"><option value="market" ${order.type === 'market' ? 'selected' : ''}>Market</option><option value="limit" ${order.type === 'limit' ? 'selected' : ''}>Limit</option><option value="stop" ${order.type === 'stop' ? 'selected' : ''}>Stop</option></select></td>
+          <td><input type="number" class="cell-input" value="${order.quantity}" step="0.01" onchange="updateOrder(${order.id}, 'quantity', this.value)"></td>
+          <td><input type="number" class="cell-input" value="${order.price}" step="0.01" onchange="updateOrder(${order.id}, 'price', this.value)" ${order.type === 'market' ? 'disabled' : ''}></td>
+          <td><input type="number" class="cell-input" value="${order.stopLoss || ''}" step="0.01" placeholder="—" onchange="updateOrder(${order.id}, 'stopLoss', this.value)"></td>
+          <td><input type="number" class="cell-input" value="${order.takeProfit || ''}" step="0.01" placeholder="—" onchange="updateOrder(${order.id}, 'takeProfit', this.value)"></td>
+          <td><span class="status-badge ${order.status}">${order.status}</span></td>
+          <td><button class="action-btn duplicate" onclick="duplicateOrder(${order.id})">Copy</button> <button class="action-btn delete" onclick="deleteOrder(${order.id})">Delete</button></td>
+        </tr>`).join('');
+      updateCounters(); updateTotalValue();
+    }
+    window.updateOrder = function(id, field, value) { const o = orders.find(o => o.id === id); if (o) { o[field] = value; validateOrder(o); renderTable(); } };
+    function validateOrder(o) { if (!o.symbol || o.quantity <= 0) o.status = 'error'; else if (o.type === 'limit' && o.price <= 0) o.status = 'error'; else o.status = 'ready'; }
+    window.addNewRow = function() { orders.push({ id: orderIdCounter++, symbol: '', side: 'buy', type: 'limit', quantity: 0, price: 0, stopLoss: 0, takeProfit: 0, status: 'pending', selected: false }); renderTable(); };
+    window.deleteOrder = function(id) { orders = orders.filter(o => o.id !== id); renderTable(); };
+    window.duplicateOrder = function(id) { const o = orders.find(o => o.id === id); if (o) { orders.push({ ...o, id: orderIdCounter++, selected: false }); renderTable(); } };
+    window.toggleRowSelection = function(id) { const o = orders.find(o => o.id === id); if (o) { o.selected = !o.selected; renderTable(); } };
+    window.toggleSelectAll = function() { const c = document.getElementById('selectAllCheckbox').checked; orders.forEach(o => o.selected = c); renderTable(); };
+    window.selectAll = function() { orders.forEach(o => o.selected = true); renderTable(); };
+    window.deselectAll = function() { orders.forEach(o => o.selected = false); renderTable(); };
+    window.deleteSelected = function() { if (confirm('Delete selected orders?')) { orders = orders.filter(o => !o.selected); renderTable(); } };
+    window.validateAll = function() { orders.forEach(validateOrder); renderTable(); alert('Validation complete'); };
+    window.clearAll = function() { if (confirm('Clear all orders?')) { orders = []; renderTable(); } };
+    window.executeOrders = function() { const v = orders.filter(o => o.status === 'ready'); if (!v.length) { alert('No valid orders to execute'); return; } if (confirm(`Execute ${v.length} orders?`)) alert(`Executing ${v.length} orders...`); };
+    window.exportCSV = function() { alert('Exporting orders.csv...'); };
+    window.openImportModal = function() { document.getElementById('importModal').classList.add('active'); };
+    window.closeImportModal = function() { document.getElementById('importModal').classList.remove('active'); };
+    window.handleFileSelect = function(e) { if (e.target.files[0]) { alert(`Importing ${e.target.files[0].name}...`); closeImportModal(); } };
+    const ua = document.getElementById('uploadArea');
+    ua.addEventListener('click', () => document.getElementById('fileInput').click());
+    ua.addEventListener('dragover', e => { e.preventDefault(); ua.classList.add('dragover'); });
+    ua.addEventListener('dragleave', () => ua.classList.remove('dragover'));
+    ua.addEventListener('drop', e => { e.preventDefault(); ua.classList.remove('dragover'); if (e.dataTransfer.files[0]) { alert(`Importing ${e.dataTransfer.files[0].name}...`); closeImportModal(); } });
+    function updateCounters() { document.getElementById('orderCount').textContent = orders.length; document.getElementById('selectedCount').textContent = orders.filter(o => o.selected).length; }
+    function updateTotalValue() { const t = orders.reduce((s, o) => s + ((o.type === 'market' ? 0 : parseFloat(o.price) || 0) * (parseFloat(o.quantity) || 0)), 0); document.getElementById('totalValue').textContent = `$${t.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`; }
+    initializeSampleData();
+  </script>
+</body>
+</html>

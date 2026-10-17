@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quick Bot — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .wizard-layout {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--surface-primary);
+    }
+
+    .wizard-progress {
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--space-4) var(--space-6);
+    }
+
+    .progress-steps {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-2);
+      max-width: 600px;
+      margin: 0 auto var(--space-4);
+    }
+
+    .progress-step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-indicator {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface-secondary);
+      border: 2px solid var(--border-default);
+      color: var(--text-tertiary);
+      font-size: var(--text-sm);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--space-2);
+      transition: all var(--transition-base);
+    }
+
+    .progress-step.active .step-indicator {
+      background: var(--accent-emerald);
+      border-color: var(--accent-emerald);
+      color: var(--text-inverse);
+    }
+
+    .progress-step.completed .step-indicator {
+      background: var(--success-default);
+      border-color: var(--success-default);
+      color: var(--text-inverse);
+    }
+
+    .step-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .progress-step.active .step-label {
+      color: var(--text-primary);
+    }
+
+    .progress-bar-track {
+      height: 3px;
+      background: var(--surface-secondary);
+      border-radius: 2px;
+      overflow: hidden;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent-emerald);
+      transition: width 0.3s ease;
+    }
+
+    .wizard-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .wizard-content {
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .wizard-step {
+      display: none;
+    }
+
+    .wizard-step.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .step-header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+    }
+
+    .step-title {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 var(--space-2) 0;
+    }
+
+    .step-subtitle {
+      font-size: var(--text-base);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+      margin-bottom: var(--space-8);
+    }
+
+    .option-card {
+      background: var(--surface-elevated);
+      border: 2px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-align: center;
+    }
+
+    .option-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+
+    .option-card.selected {
+      border-color: var(--accent-emerald);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .option-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto var(--space-3);
+      background: var(--surface-secondary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-emerald);
+    }
+
+    .option-card.selected .option-icon {
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .option-title {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 var(--space-2) 0;
+    }
+
+    .option-description {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: var(--space-4);
+      margin-bottom: var(--space-8);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+    }
+
+    .form-group {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+    }
+
+    .form-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: var(--space-3);
+      background: var(--surface-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      font-family: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--accent-emerald);
+    }
+
+    .range-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface-secondary);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      cursor: pointer;
+    }
+
+    .range-value {
+      font-size: var(--text-base);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-emerald);
+      margin-top: var(--space-2);
+    }
+
+    .summary-section {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      margin-bottom: var(--space-6);
+    }
+
+    .summary-header {
+      border-bottom: 1px solid var(--border-default);
+      padding-bottom: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+
+    .summary-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--space-3);
+      background: var(--surface-secondary);
+      border-radius: var(--radius-md);
+    }
+
+    .summary-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    .summary-value {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+    }
+
+    .wizard-actions {
+      display: flex;
+      gap: var(--space-3);
+      justify-content: center;
+    }
+
+    .success-state {
+      text-align: center;
+    }
+
+    .success-icon {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto var(--space-6);
+      background: var(--success-default);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 48px;
+      animation: scaleIn 0.5s ease;
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0);
+      }
+      to {
+        transform: scale(1);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" aria-label="Toggle sidebar">
+          <i data-lucide="menu"></i>
+        </button>
+        <img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/>
+        <span class="topbar-brand">Tradersbloc</span>
+      </div>
+      <div class="topbar-center">
+        <span class="topbar-title">Quick Bot Creator</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-ghost" onclick="resetWizard()">
+          <i data-lucide="rotate-ccw"></i>
+          Start Over
+        </button>
+      </div>
+    </header>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="wizard-layout">
+        <div class="wizard-progress">
+          <div class="progress-steps">
+            <div class="progress-step active" id="step1Indicator">
+              <div class="step-indicator">1</div>
+              <div class="step-label">Strategy</div>
+            </div>
+            <div class="progress-step" id="step2Indicator">
+              <div class="step-indicator">2</div>
+              <div class="step-label">Risk</div>
+            </div>
+            <div class="progress-step" id="step3Indicator">
+              <div class="step-indicator">3</div>
+              <div class="step-label">Configure</div>
+            </div>
+            <div class="progress-step" id="step4Indicator">
+              <div class="step-indicator">4</div>
+              <div class="step-label">Review</div>
+            </div>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill" style="width: 25%"></div>
+          </div>
+        </div>
+
+        <div class="wizard-container">
+          <div class="wizard-content">
+            <!-- Step 1: Strategy -->
+            <div class="wizard-step active" id="step1">
+              <div class="step-header">
+                <h2 class="step-title">Choose Your Strategy</h2>
+                <p class="step-subtitle">Select a trading strategy that matches your goals</p>
+              </div>
+              <div class="options-grid">
+                <div class="option-card" onclick="selectOption(this, 'grid')">
+                  <div class="option-icon">
+                    <i data-lucide="grid-3x3" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Grid Trading</h3>
+                  <p class="option-description">Profit from market volatility with automated buy and sell orders in a range</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this, 'trend')">
+                  <div class="option-icon">
+                    <i data-lucide="trending-up" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Trend Following</h3>
+                  <p class="option-description">Ride strong market trends with moving average crossover signals</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this, 'scalping')">
+                  <div class="option-icon">
+                    <i data-lucide="zap" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Scalping</h3>
+                  <p class="option-description">Make quick profits from small price movements with high frequency trading</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this, 'arbitrage')">
+                  <div class="option-icon">
+                    <i data-lucide="repeat" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Arbitrage</h3>
+                  <p class="option-description">Exploit price differences across multiple exchanges for risk-free profits</p>
+                </div>
+              </div>
+              <div class="wizard-actions">
+                <button class="btn btn-lg btn-primary" onclick="nextStep()" id="step1Next" disabled>
+                  Next Step
+                  <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 2: Risk -->
+            <div class="wizard-step" id="step2">
+              <div class="step-header">
+                <h2 class="step-title">Set Risk Level</h2>
+                <p class="step-subtitle">Define how much risk you're comfortable with</p>
+              </div>
+              <div class="options-grid">
+                <div class="option-card" onclick="selectOption(this, 'conservative')">
+                  <div class="option-icon">
+                    <i data-lucide="shield" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Conservative</h3>
+                  <p class="option-description">Low risk, steady returns. 1-2% per trade with tight stop losses</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this, 'moderate')">
+                  <div class="option-icon">
+                    <i data-lucide="scale" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Moderate</h3>
+                  <p class="option-description">Balanced approach. 2-5% per trade with moderate stop losses</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this, 'aggressive')">
+                  <div class="option-icon">
+                    <i data-lucide="rocket" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Aggressive</h3>
+                  <p class="option-description">Higher risk, higher reward. 5-10% per trade with wider stops</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this, 'custom')">
+                  <div class="option-icon">
+                    <i data-lucide="settings" style="width:24px;height:24px;"></i>
+                  </div>
+                  <h3 class="option-title">Custom</h3>
+                  <p class="option-description">Full control over all risk parameters and position sizing</p>
+                </div>
+              </div>
+              <div class="wizard-actions">
+                <button class="btn btn-lg btn-secondary" onclick="prevStep()">
+                  <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                  Back
+                </button>
+                <button class="btn btn-lg btn-primary" onclick="nextStep()" id="step2Next" disabled>
+                  Next Step
+                  <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 3: Configure -->
+            <div class="wizard-step" id="step3">
+              <div class="step-header">
+                <h2 class="step-title">Configure Bot</h2>
+                <p class="step-subtitle">Fine-tune your bot settings</p>
+              </div>
+              <div class="form-grid">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Trading Pair</label>
+                    <select class="form-select" id="tradingPair">
+                      <option>BTC/USDT</option>
+                      <option>ETH/USDT</option>
+                      <option>SOL/USDT</option>
+                      <option>BNB/USDT</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Investment Amount (USDT)</label>
+                    <input type="number" class="form-input" value="1000" id="investmentAmount" placeholder="1000"/>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Max Trades Per Day</label>
+                  <input type="range" class="range-slider" min="1" max="100" value="20" id="maxTrades" oninput="updateRangeValue(this)"/>
+                  <div class="range-value" id="maxTradesValue">20 trades</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Bot Name</label>
+                  <input type="text" class="form-input" placeholder="My Trading Bot" id="botName"/>
+                </div>
+              </div>
+              <div class="wizard-actions">
+                <button class="btn btn-lg btn-secondary" onclick="prevStep()">
+                  <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                  Back
+                </button>
+                <button class="btn btn-lg btn-primary" onclick="nextStep()">
+                  Review & Create
+                  <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 4: Review -->
+            <div class="wizard-step" id="step4">
+              <div class="step-header">
+                <h2 class="step-title">Review & Launch</h2>
+                <p class="step-subtitle">Confirm your bot configuration</p>
+              </div>
+              <div class="summary-section">
+                <div class="summary-header">
+                  <h3 class="summary-title">Bot Configuration</h3>
+                </div>
+                <div class="summary-grid">
+                  <div class="summary-item">
+                    <span class="summary-label">Strategy</span>
+                    <span class="summary-value" id="summaryStrategy">-</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Risk Level</span>
+                    <span class="summary-value" id="summaryRisk">-</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Trading Pair</span>
+                    <span class="summary-value" id="summaryPair">-</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Investment</span>
+                    <span class="summary-value" id="summaryInvestment">-</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Max Trades/Day</span>
+                    <span class="summary-value" id="summaryMaxTrades">-</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Bot Name</span>
+                    <span class="summary-value" id="summaryName">-</span>
+                  </div>
+                </div>
+              </div>
+              <div class="wizard-actions">
+                <button class="btn btn-lg btn-secondary" onclick="prevStep()">
+                  <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                  Back
+                </button>
+                <button class="btn btn-lg btn-primary" onclick="createBot()">
+                  <i data-lucide="rocket" style="width: 18px; height: 18px;"></i>
+                  Launch Bot
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 5: Success -->
+            <div class="wizard-step" id="step5">
+              <div class="success-state">
+                <div class="success-icon">
+                  <i data-lucide="check" style="width:48px;height:48px;"></i>
+                </div>
+                <div class="step-header">
+                  <h2 class="step-title">Bot Created Successfully!</h2>
+                  <p class="step-subtitle">Your trading bot is now active and monitoring the market</p>
+                </div>
+                <div class="wizard-actions">
+                  <button class="btn btn-lg btn-secondary" onclick="resetWizard()">
+                    Create Another Bot
+                  </button>
+                  <button class="btn btn-lg btn-primary" onclick="window.location='auto-ai.html'">
+                    View Dashboard
+                    <i data-lucide="external-link" style="width: 18px; height: 18px;"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="shared-components.js"></script>
+  <script>
+    lucide.createIcons();
+    
+    let currentStep = 1;
+    let selections = {
+      strategy: null,
+      risk: null
+    };
+
+    function selectOption(element, value) {
+      element.parentElement.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      
+      element.classList.add('selected');
+      
+      if (currentStep === 1) {
+        selections.strategy = value;
+        document.getElementById('step1Next').disabled = false;
+      } else if (currentStep === 2) {
+        selections.risk = value;
+        document.getElementById('step2Next').disabled = false;
+      }
+      
+      lucide.createIcons();
+    }
+
+    function nextStep() {
+      if (currentStep === 4) {
+        updateSummary();
+        return;
+      }
+
+      document.getElementById(`step${currentStep}`).classList.remove('active');
+      document.getElementById(`step${currentStep}Indicator`).classList.add('completed');
+      document.getElementById(`step${currentStep}Indicator`).classList.remove('active');
+      
+      currentStep++;
+      
+      document.getElementById(`step${currentStep}`).classList.add('active');
+      document.getElementById(`step${currentStep}Indicator`).classList.add('active');
+      
+      updateProgress();
+      lucide.createIcons();
+    }
+
+    function prevStep() {
+      document.getElementById(`step${currentStep}`).classList.remove('active');
+      document.getElementById(`step${currentStep}Indicator`).classList.remove('active');
+      
+      currentStep--;
+      
+      document.getElementById(`step${currentStep}`).classList.add('active');
+      document.getElementById(`step${currentStep}Indicator`).classList.remove('completed');
+      document.getElementById(`step${currentStep}Indicator`).classList.add('active');
+      
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const progress = (currentStep / 4) * 100;
+      document.getElementById('progressFill').style.width = progress + '%';
+    }
+
+    function updateRangeValue(slider) {
+      document.getElementById('maxTradesValue').textContent = slider.value + ' trades';
+    }
+
+    function updateSummary() {
+      document.getElementById('summaryStrategy').textContent = selections.strategy || '-';
+      document.getElementById('summaryRisk').textContent = selections.risk || '-';
+      document.getElementById('summaryPair').textContent = document.getElementById('tradingPair').value;
+      document.getElementById('summaryInvestment').textContent = '$' + document.getElementById('investmentAmount').value;
+      document.getElementById('summaryMaxTrades').textContent = document.getElementById('maxTrades').value;
+      document.getElementById('summaryName').textContent = document.getElementById('botName').value || 'My Trading Bot';
+    }
+
+    function createBot() {
+      document.getElementById('step4').classList.remove('active');
+      document.getElementById('step4Indicator').classList.add('completed');
+      document.getElementById('step5').classList.add('active');
+      document.getElementById('progressFill').style.width = '100%';
+      lucide.createIcons();
+    }
+
+    function resetWizard() {
+      currentStep = 1;
+      selections = { strategy: null, risk: null };
+      
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`step${i}`).classList.remove('active');
+        if (i <= 4) {
+          document.getElementById(`step${i}Indicator`).classList.remove('active', 'completed');
+        }
+      }
+      
+      document.getElementById('step1').classList.add('active');
+      document.getElementById('step1Indicator').classList.add('active');
+      document.getElementById('progressFill').style.width = '25%';
+      
+      document.getElementById('step1Next').disabled = true;
+      document.getElementById('step2Next').disabled = true;
+      
+      document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+      
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

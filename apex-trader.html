@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apex Trader — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .apex-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr 300px;
+      grid-template-rows: auto 1fr 220px;
+      height: 100%;
+      gap: 0;
+      background: var(--surface-primary);
+    }
+    .apex-toolbar {
+      grid-column: 1 / -1;
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .market-tabs { display: flex; gap: 2px; }
+    .market-tab {
+      padding: var(--space-2) var(--space-4);
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+    .market-tab:hover { color: var(--text-primary); background: var(--surface-hover); }
+    .market-tab.active { background: var(--surface-secondary); color: var(--text-primary); }
+    .balance-display {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    .balance-display strong { color: var(--accent-emerald); font-variant-numeric: tabular-nums; }
+
+    .watchlist-panel {
+      grid-row: 2 / 4;
+      background: var(--surface-elevated);
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+    }
+    .panel-title-bar {
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--surface-secondary);
+    }
+    .watchlist-item {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .watchlist-item:hover { background: var(--surface-secondary); }
+    .watchlist-item.active { background: var(--accent-blue-subtle); border-left: 3px solid var(--accent-blue); }
+    .wl-symbol-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+    .wl-name { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); }
+    .wl-change { font-size: var(--text-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .wl-change.positive { color: var(--state-positive); }
+    .wl-change.negative { color: var(--state-negative); }
+    .wl-price-row { display: flex; justify-content: space-between; }
+    .wl-price { font-size: var(--text-xs); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .wl-volume { font-size: 10px; color: var(--text-tertiary); }
+
+    .chart-panel { background: var(--surface-elevated); display: flex; flex-direction: column; overflow: hidden; }
+    .chart-toolbar {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--surface-secondary);
+    }
+    .chart-symbol { font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); }
+    .tf-selector { display: flex; gap: 2px; }
+    .tf-btn {
+      padding: var(--space-1) var(--space-2);
+      background: transparent;
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .tf-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+    .tf-btn.active { background: var(--accent-emerald); border-color: var(--accent-emerald); color: var(--text-inverse); }
+    .chart-canvas { flex: 1; background: var(--surface-primary); position: relative; }
+
+    .order-panel { background: var(--surface-elevated); overflow-y: auto; }
+    .order-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); }
+    .order-tab {
+      flex: 1; padding: var(--space-3);
+      background: transparent; border: none;
+      color: var(--text-secondary); font-size: var(--text-sm); font-weight: 600;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all var(--transition-fast);
+    }
+    .order-tab:hover { color: var(--text-primary); }
+    .order-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-emerald); }
+    .order-form { padding: var(--space-4); }
+    .order-side-toggle { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+    .side-btn {
+      flex: 1; padding: var(--space-2) var(--space-3);
+      background: var(--surface-secondary); border: 1px solid var(--border-default);
+      border-radius: var(--radius-md); color: var(--text-secondary);
+      font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .side-btn.active.buy { background: var(--state-positive); border-color: var(--state-positive); color: var(--text-inverse); }
+    .side-btn.active.sell { background: var(--state-negative); border-color: var(--state-negative); color: var(--text-inverse); }
+    .form-group { margin-bottom: var(--space-3); }
+    .form-label {
+      display: block; font-size: var(--text-xs); color: var(--text-tertiary);
+      margin-bottom: var(--space-1); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
+    }
+    .form-input {
+      width: 100%; padding: var(--space-2) var(--space-3);
+      background: var(--surface-secondary); border: 1px solid var(--border-default);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-size: var(--text-sm); font-variant-numeric: tabular-nums;
+    }
+    .form-input:focus { outline: none; border-color: var(--accent-emerald); }
+    .order-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-4); }
+    .order-btn {
+      padding: var(--space-3); border: none; border-radius: var(--radius-md);
+      font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .order-btn.buy { background: var(--state-positive); color: var(--text-inverse); }
+    .order-btn.sell { background: var(--state-negative); color: var(--text-inverse); }
+
+    .positions-panel { grid-column: 1 / 3; background: var(--surface-elevated); overflow-y: auto; }
+    .pos-tabs { display: flex; gap: var(--space-4); padding: 0 var(--space-4); border-bottom: 1px solid var(--border-subtle); }
+    .pos-tab {
+      padding: var(--space-3) 0; background: transparent; border: none;
+      color: var(--text-secondary); font-size: var(--text-sm); font-weight: 600;
+      cursor: pointer; border-bottom: 2px solid transparent;
+    }
+    .pos-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-emerald); }
+    .pos-table { width: 100%; font-size: var(--text-sm); border-collapse: collapse; }
+    .pos-table th {
+      padding: var(--space-3) var(--space-4); text-align: left;
+      color: var(--text-tertiary); font-weight: 600; font-size: var(--text-xs);
+      text-transform: uppercase; letter-spacing: 0.05em; background: var(--surface-secondary);
+    }
+    .pos-table td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-primary); font-variant-numeric: tabular-nums;
+    }
+    .pos-table tbody tr:hover { background: var(--surface-secondary); }
+    .pnl-pos { color: var(--state-positive); font-weight: 600; }
+    .pnl-neg { color: var(--state-negative); font-weight: 600; }
+    .close-btn {
+      padding: var(--space-1) var(--space-3);
+      background: var(--state-negative-bg); border: none;
+      border-radius: var(--radius-sm); color: var(--state-negative);
+      font-size: var(--text-xs); font-weight: 600; cursor: pointer;
+    }
+
+    .activity-panel { background: var(--surface-elevated); overflow-y: auto; }
+    .activity-item { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); font-size: var(--text-sm); }
+    .activity-time { color: var(--text-tertiary); font-size: var(--text-xs); margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+    .activity-text { color: var(--text-secondary); }
+    @media (max-width: 1400px) { .apex-layout { grid-template-columns: 200px 1fr 280px; } }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" aria-label="Toggle sidebar"><i data-lucide="menu"></i></button>
+        <img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/>
+        <span class="topbar-brand">Tradersbloc</span>
+      </div>
+      <div class="topbar-center"><span class="topbar-title">Apex Trader</span></div>
+      <div class="topbar-right">
+        <button class="topbar-icon-btn" aria-label="Settings"><i data-lucide="settings"></i></button>
+        <div class="user-menu"><button class="user-menu-trigger"><span class="user-avatar">T</span></button></div>
+      </div>
+    </header>
+    <aside class="sidebar"><nav class="sidebar-nav" id="sidebarNav"></nav></aside>
+    <main class="main-content">
+      <div class="apex-layout">
+        <div class="apex-toolbar">
+          <div class="market-tabs">
+            <button class="market-tab active">Crypto</button>
+            <button class="market-tab">Forex</button>
+            <button class="market-tab">Stocks</button>
+          </div>
+          <div class="balance-display">Balance: <strong>$24,891.43</strong></div>
+        </div>
+        <div class="watchlist-panel">
+          <div class="panel-title-bar">Watchlist</div>
+          <div id="watchlist"></div>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-toolbar">
+            <div class="chart-symbol" id="chartSymbol">BTC/USDT</div>
+            <div class="tf-selector">
+              <button class="tf-btn">1m</button><button class="tf-btn">5m</button>
+              <button class="tf-btn active">15m</button><button class="tf-btn">1h</button>
+              <button class="tf-btn">4h</button><button class="tf-btn">1D</button>
+            </div>
+          </div>
+          <div class="chart-canvas" id="apexChart"></div>
+        </div>
+        <div class="order-panel">
+          <div class="order-tabs">
+            <button class="order-tab active">Limit</button>
+            <button class="order-tab">Market</button>
+            <button class="order-tab">Stop</button>
+          </div>
+          <div class="order-form">
+            <div class="order-side-toggle">
+              <button class="side-btn active buy" id="buyToggle">Buy</button>
+              <button class="side-btn sell" id="sellToggle">Sell</button>
+            </div>
+            <div class="form-group"><label class="form-label">Price (USDT)</label><input type="text" class="form-input" value="43,250.00" id="priceInput"></div>
+            <div class="form-group"><label class="form-label">Amount (BTC)</label><input type="text" class="form-input" value="0.5" id="amountInput"></div>
+            <div class="form-group"><label class="form-label">Total (USDT)</label><input type="text" class="form-input" value="21,625.00" id="totalInput" readonly></div>
+            <div class="order-actions">
+              <button class="order-btn buy" onclick="placeOrder('buy')">Buy BTC</button>
+              <button class="order-btn sell" onclick="placeOrder('sell')">Sell BTC</button>
+            </div>
+          </div>
+        </div>
+        <div class="positions-panel">
+          <div class="pos-tabs">
+            <button class="pos-tab active">Open Positions (3)</button>
+            <button class="pos-tab">Orders (2)</button>
+            <button class="pos-tab">History</button>
+          </div>
+          <table class="pos-table">
+            <thead><tr><th>Symbol</th><th>Type</th><th>Size</th><th>Entry</th><th>Current</th><th>P&L</th><th>ROI</th><th>Action</th></tr></thead>
+            <tbody id="positionsBody">
+              <tr><td><strong>BTC/USDT</strong></td><td>Long</td><td>0.25</td><td>$42,100</td><td>$43,250</td><td class="pnl-pos">+$287.50</td><td class="pnl-pos">+2.73%</td><td><button class="close-btn" onclick="closePosition('BTC')">Close</button></td></tr>
+              <tr><td><strong>ETH/USDT</strong></td><td>Long</td><td>5.0</td><td>$2,340</td><td>$2,410</td><td class="pnl-pos">+$350.00</td><td class="pnl-pos">+2.99%</td><td><button class="close-btn" onclick="closePosition('ETH')">Close</button></td></tr>
+              <tr><td><strong>SOL/USDT</strong></td><td>Short</td><td>50</td><td>$98.50</td><td>$99.20</td><td class="pnl-neg">-$35.00</td><td class="pnl-neg">-0.71%</td><td><button class="close-btn" onclick="closePosition('SOL')">Close</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="activity-panel">
+          <div class="panel-title-bar">Activity Feed</div>
+          <div id="activityFeed"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared-components.js"></script>
+  <script src="lightweight-charts.min.js"></script>
+  <script>
+    lucide.createIcons();
+    const watchlistData = [
+      { symbol: 'BTC/USDT', price: 43250.00, change: 2.34, volume: '24.5B' },
+      { symbol: 'ETH/USDT', price: 2410.50, change: 3.12, volume: '8.2B' },
+      { symbol: 'SOL/USDT', price: 99.20, change: -1.45, volume: '1.8B' },
+      { symbol: 'BNB/USDT', price: 312.80, change: 0.87, volume: '890M' },
+      { symbol: 'XRP/USDT', price: 0.5234, change: 5.67, volume: '2.1B' },
+      { symbol: 'ADA/USDT', price: 0.4512, change: -0.92, volume: '720M' },
+      { symbol: 'AVAX/USDT', price: 37.40, change: 1.23, volume: '540M' },
+      { symbol: 'MATIC/USDT', price: 0.8765, change: -2.14, volume: '630M' }
+    ];
+    function renderWatchlist() {
+      document.getElementById('watchlist').innerHTML = watchlistData.map((item, idx) => `
+        <div class="watchlist-item ${idx === 0 ? 'active' : ''}" onclick="selectSymbol('${item.symbol}', this)">
+          <div class="wl-symbol-row">
+            <span class="wl-name">${item.symbol}</span>
+            <span class="wl-change ${item.change >= 0 ? 'positive' : 'negative'}">${item.change >= 0 ? '+' : ''}${item.change.toFixed(2)}%</span>
+          </div>
+          <div class="wl-price-row">
+            <span class="wl-price">$${item.price.toLocaleString()}</span>
+            <span class="wl-volume">Vol ${item.volume}</span>
+          </div>
+        </div>`).join('');
+    }
+    const chartContainer = document.getElementById('apexChart');
+    if (chartContainer && typeof LightweightCharts !== 'undefined') {
+      const chart = LightweightCharts.createChart(chartContainer, {
+        layout: { background: { color: '#0B1120' }, textColor: '#6B7280' },
+        grid: { vertLines: { color: '#1F2937' }, horzLines: { color: '#1F2937' } },
+        width: chartContainer.clientWidth, height: chartContainer.clientHeight
+      });
+      const cs = chart.addCandlestickSeries({ upColor: '#10B981', downColor: '#EF4444', borderVisible: false, wickUpColor: '#10B981', wickDownColor: '#EF4444' });
+      if (typeof generateSampleData === 'function') cs.setData(generateSampleData(200));
+      window.addEventListener('resize', () => chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight }));
+    }
+    const activities = [
+      { time: '10:45:23', text: 'Limit order filled: BUY 0.25 BTC @ $42,100' },
+      { time: '10:43:10', text: 'Stop loss triggered: SELL 1.0 ETH @ $2,380' },
+      { time: '10:41:05', text: 'New position opened: LONG 50 SOL @ $98.50' },
+      { time: '10:38:44', text: 'Take profit hit: SELL 0.5 BTC @ $42,890' },
+      { time: '10:35:12', text: 'Order placed: BUY 5.0 ETH @ $2,340' }
+    ];
+    document.getElementById('activityFeed').innerHTML = activities.map(a => `
+      <div class="activity-item"><div class="activity-time">${a.time}</div><div class="activity-text">${a.text}</div></div>`).join('');
+    window.placeOrder = function(side) {
+      alert(`${side.toUpperCase()} Order Placed\n${document.getElementById('chartSymbol').textContent}\nPrice: $${document.getElementById('priceInput').value}\nAmount: ${document.getElementById('amountInput').value}`);
+    };
+    window.closePosition = function(symbol) { if (confirm(`Close ${symbol} position?`)) alert(`${symbol} position closed`); };
+    window.selectSymbol = function(symbol, el) {
+      document.getElementById('chartSymbol').textContent = symbol;
+      document.querySelectorAll('.watchlist-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+    };
+    renderWatchlist();
+  </script>
+</body>
+</html>

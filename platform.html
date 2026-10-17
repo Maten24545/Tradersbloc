@@ -1,0 +1,1040 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="alternate icon" href="favicon.ico"/>
+  <title>Tradersbloc — Professional Trading Terminal</title>
+  <link rel="stylesheet" href="fintech-theme.css"/>
+  <link rel="stylesheet" href="nexus-theme.css"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="platform.css"/>
+  <link rel="stylesheet" href="chart-ui.css"/>
+  <link rel="stylesheet" href="workspaces.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="lucide-icons.js"></script>
+  <script src="icons.js"></script>
+  <script src="theme-toggle.js"></script>
+  <!-- TradingView Lightweight Charts v4 (MIT licensed) — local copy with CDN fallback -->
+  <script src="lightweight-charts.min.js"></script>
+  <script>
+    if (typeof LightweightCharts === 'undefined') {
+      document.write('<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"><\/script>');
+    }
+  </script>
+</head>
+<body class="platform-body">
+
+  <!-- ─── TOP BAR ─── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="index.html" class="logo">
+        <img src="logo.svg" alt="Tradersbloc" class="logo-image"/>
+        <span class="logo-text">Tradersbloc</span>
+      </a>
+      <div class="asset-selector-wrap">
+        <button class="asset-selector" id="assetSelectorBtn">
+          <span id="currentAssetFlag">🇪🇺🇺🇸</span>
+          <span id="currentAssetName">EUR/USD</span>
+          <span class="asset-ret-badge up" id="currentAssetRet">+82%</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="asset-dropdown" id="assetDropdown"></div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="price-display">
+        <span class="price-label">PRICE</span>
+        <span class="price-value" id="livePrice">1.08542</span>
+        <span class="price-change up" id="priceChange">▲ +0.0012</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="balance-chip">
+        <span class="balance-label">Balance</span>
+        <span class="balance-value" id="topBalance">$0.00</span>
+      </div>
+      <span id="accountTypeBadge" class="acct-badge real">Real</span>
+      <button class="btn btn-primary btn-sm" id="depositTopBtn">Deposit</button>
+      <button class="btn btn-sm" data-theme-toggle aria-label="Toggle theme" title="Toggle theme">
+        <i data-lucide="sun" class="icon"></i>
+      </button>
+      <div class="user-menu" id="userMenuBtn">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="user-info">
+            <div class="user-name" id="dropUserName">Trader</div>
+            <div class="user-email" id="dropUserEmail">—</div>
+          </div>
+          <hr/>
+          <a href="#" id="profileLink"><i data-lucide="user" style="width:14px;height:14px"></i> Profile</a>
+          <a href="#" id="walletMenuLink"><i data-lucide="wallet" style="width:14px;height:14px"></i> Wallet</a>
+          <a href="#" id="historyMenuLink"><i data-lucide="file-text" style="width:14px;height:14px"></i> Trade History</a>
+          <hr/>
+          <a href="#" id="logoutBtn" class="logout-link"><i data-lucide="log-out" style="width:14px;height:14px"></i> Log Out</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── TOOLS NAV BAR ─── -->
+  <nav class="tools-navbar" id="toolsNavbar">
+    <div class="tools-nav-inner">
+      <button class="tn-btn active" data-tool="dashboard" onclick="switchTool('dashboard',this)">
+        <i data-lucide="layout-dashboard" class="tn-icon"></i>
+        <span>Dashboard</span>
+      </button>
+      <button class="tn-btn" data-tool="bot-builder" onclick="switchTool('bot-builder',this)">
+        <i data-lucide="bot" class="tn-icon"></i>
+        <span>Bot Builder</span>
+      </button>
+      <button class="tn-btn tn-ai" data-tool="volt-ai" onclick="switchTool('volt-ai',this)">
+        <i data-lucide="zap" class="tn-icon"></i>
+        <span>Volt <span class="tn-ai-badge">AI</span></span>
+      </button>
+      <button class="tn-btn tn-ai" data-tool="auto-ai" onclick="switchTool('auto-ai',this)">
+        <i data-lucide="brain" class="tn-icon"></i>
+        <span>Auto <span class="tn-ai-badge">AI</span></span>
+      </button>
+      <button class="tn-btn" data-tool="free-bots" onclick="switchTool('free-bots',this)">
+        <i data-lucide="cpu" class="tn-icon"></i>
+        <span>Free Bots</span>
+      </button>
+      <button class="tn-btn tn-premium" data-tool="premium-bots" onclick="switchTool('premium-bots',this)">
+        <i data-lucide="sparkles" class="tn-icon"></i>
+        <span>Premium AI Bots</span>
+      </button>
+      <button class="tn-btn" data-tool="quick-bot" onclick="switchTool('quick-bot',this)">
+        <i data-lucide="clock" class="tn-icon"></i>
+        <span>Quick Bot</span>
+      </button>
+      <button class="tn-btn tn-ai" data-tool="signal-ai" onclick="switchTool('signal-ai',this)">
+        <i data-lucide="activity" class="tn-icon"></i>
+        <span>Signal <span class="tn-ai-badge">AI</span></span>
+      </button>
+      <button class="tn-btn" data-tool="manual-trader" onclick="switchTool('manual-trader',this)">
+        <i data-lucide="hand" class="tn-icon"></i>
+        <span>Manual Trader</span>
+      </button>
+      <button class="tn-btn" data-tool="bulk-trader" onclick="switchTool('bulk-trader',this)">
+        <i data-lucide="layers" class="tn-icon"></i>
+        <span>Bulk Trader</span>
+      </button>
+      <button class="tn-btn" data-tool="apex-bot" onclick="switchTool('apex-bot',this)">
+        <i data-lucide="flame" class="tn-icon"></i>
+        <span>Apex Bot</span>
+      </button>
+      <button class="tn-btn" data-tool="copy-trader" onclick="switchTool('copy-trader',this)">
+        <i data-lucide="copy" class="tn-icon"></i>
+        <span>Copy Trader</span>
+      </button>
+      <button class="tn-btn" data-tool="analysis-tools" onclick="switchTool('analysis-tools',this)">
+        <i data-lucide="bar-chart-2" class="tn-icon"></i>
+        <span>Analysis Tools</span>
+      </button>
+      <button class="tn-btn tn-speed" data-tool="speedbot" onclick="switchTool('speedbot',this)">
+        <i data-lucide="gauge" class="tn-icon"></i>
+        <span>Speedbot</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── TOOL WORKSPACE PANELS (shown when a tool tab is clicked) ─── -->
+  <div id="toolWorkspace" class="tool-workspace" style="display:none"></div>
+
+  <!-- ─── MAIN LAYOUT ─── -->
+  <div class="platform-layout" id="mainPlatformLayout">
+
+    <!-- ─── LEFT TOOLBAR (Drawing tools) ─── -->
+    <div class="left-toolbar" id="leftToolbar">
+
+      <!-- Cursor group -->
+      <div class="ltb-group">
+        <button class="ltb-btn active" data-tool="cursor" id="toolCursor"
+                title="Cursor — normal mouse mode"
+                onclick="setDrawTool('cursor',this)">
+          <i data-lucide="mouse-pointer-2" class="ltb-icon"></i>
+          <span class="ltb-label">Cursor</span>
+        </button>
+        <button class="ltb-btn" data-tool="crosshair" id="toolCrosshair"
+                title="Crosshair — precise crosshair cursor"
+                onclick="setDrawTool('crosshair',this)">
+          <i data-lucide="crosshair" class="ltb-icon"></i>
+          <span class="ltb-label">Cross</span>
+        </button>
+      </div>
+
+      <div class="ltb-divider"></div>
+
+      <!-- Lines group -->
+      <div class="ltb-group">
+        <button class="ltb-btn" data-tool="hline" id="toolHline"
+                title="Horizontal Line — click on chart to place"
+                onclick="setDrawTool('hline',this)">
+          <i data-lucide="minus" class="ltb-icon"></i>
+          <span class="ltb-label">H-Line</span>
+        </button>
+        <button class="ltb-btn" data-tool="vline" id="toolVline"
+                title="Vertical Line — click on chart to place"
+                onclick="setDrawTool('vline',this)">
+          <i data-lucide="separator-vertical" class="ltb-icon"></i>
+          <span class="ltb-label">V-Line</span>
+        </button>
+      </div>
+
+      <div class="ltb-divider"></div>
+
+      <!-- Analysis group -->
+      <div class="ltb-group">
+        <button class="ltb-btn" data-tool="fib" id="fibBtn"
+                title="Fibonacci Retracement — auto-applies to last swing"
+                onclick="setDrawTool('fib',this); applyFibonacci()">
+          <i data-lucide="git-branch" class="ltb-icon"></i>
+          <span class="ltb-label">Fib</span>
+        </button>
+        <button class="ltb-btn" data-tool="pivot" id="pivotBtn"
+                title="Pivot Points — daily S/R levels from previous candle"
+                onclick="setDrawTool('pivot',this); applyPivots()">
+          <i data-lucide="target" class="ltb-icon"></i>
+          <span class="ltb-label">Pivots</span>
+        </button>
+      </div>
+
+      <div class="ltb-divider"></div>
+
+      <!-- Actions group -->
+      <div class="ltb-group">
+        <button class="ltb-btn ltb-action" title="Undo last drawing (Ctrl+Z)"
+                onclick="DrawingTools.undo(); showToolFeedback(this,'Undone')">
+          <i data-lucide="undo-2" class="ltb-icon"></i>
+          <span class="ltb-label">Undo</span>
+        </button>
+        <button class="ltb-btn ltb-action ltb-danger" title="Clear all drawings"
+                onclick="confirmClearAll()">
+          <i data-lucide="trash-2" class="ltb-icon"></i>
+          <span class="ltb-label">Clear</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ─── CHART AREA ─── -->
+    <div class="chart-area-wrapper">
+
+      <!-- Chart Toolbar — upgraded -->
+      <div class="chart-toolbar">
+        <!-- Timeframes -->
+        <div class="tf-buttons" id="tfButtons">
+          <button class="tf-btn active" data-tf="30">30s</button>
+          <button class="tf-btn" data-tf="60">1m</button>
+          <button class="tf-btn" data-tf="120">2m</button>
+          <button class="tf-btn" data-tf="300">5m</button>
+          <button class="tf-btn" data-tf="900">15m</button>
+          <button class="tf-btn" data-tf="1800">30m</button>
+          <button class="tf-btn" data-tf="3600">1h</button>
+          <button class="tf-btn" data-tf="14400">4h</button>
+          <button class="tf-btn" data-tf="86400">1D</button>
+        </div>
+
+        <!-- Separator -->
+        <div class="tb-sep"></div>
+
+        <!-- Chart type selector -->
+        <div class="chart-type-wrap">
+          <button class="ct-btn active" data-ct="candlestick" title="Candlestick"       onclick="setChartTypeUI('candlestick')">🕯</button>
+          <button class="ct-btn"        data-ct="hollow"      title="Hollow Candlestick" onclick="setChartTypeUI('hollow')">◻</button>
+          <button class="ct-btn"        data-ct="ohlc"        title="OHLC Bars"          onclick="setChartTypeUI('ohlc')">⊟</button>
+          <button class="ct-btn"        data-ct="line"        title="Line"               onclick="setChartTypeUI('line')">∕</button>
+          <button class="ct-btn"        data-ct="area"        title="Area"               onclick="setChartTypeUI('area')">▲</button>
+          <button class="ct-btn"        data-ct="baseline"    title="Baseline"           onclick="setChartTypeUI('baseline')">⌖</button>
+          <button class="ct-btn"        data-ct="heikin"      title="Heikin Ashi"        onclick="setChartTypeUI('heikin')">ⓗ</button>
+        </div>
+
+        <div class="tb-sep"></div>
+
+        <!-- Indicator & Pattern buttons -->
+        <button class="tb-icon-btn" id="indicatorBtn"  title="Add Indicator"       onclick="togglePanel('indicatorPanel')">⚙ Indicators</button>
+        <button class="tb-icon-btn" id="patternToggle" title="Pattern Recognition"  onclick="togglePanel('patternPanel')">◈ Patterns</button>
+
+        <div class="tb-sep"></div>
+
+        <!-- Legend -->
+        <div class="chart-legend" id="chartLegend">
+          <span class="leg-o">O <strong>—</strong></span>
+          <span class="leg-h up">H <strong>—</strong></span>
+          <span class="leg-l down">L <strong>—</strong></span>
+          <span class="leg-c">C <strong>—</strong></span>
+        </div>
+
+        <!-- Right side tools -->
+        <div class="tb-right">
+          <button class="tb-icon-btn" title="Fullscreen" onclick="toggleFullscreen()" id="fsBtn">⛶</button>
+          <button class="tb-icon-btn" title="Toggle Theme" onclick="toggleThemeUI()">☀</button>
+          <button class="tb-icon-btn" title="Scroll to now" onclick="ChartEngine.scrollToNow()">⟶</button>
+        </div>
+      </div>
+
+      <!-- OHLC stats bar -->
+      <div class="chart-stats-bar">
+        <span>O: <strong id="statOpen">—</strong></span>
+        <span>H: <strong id="statHigh" class="up">—</strong></span>
+        <span>L: <strong id="statLow" class="down">—</strong></span>
+        <span>C: <strong id="statClose">—</strong></span>
+        <span id="feedStatus" class="feed-status">● Connecting…</span>
+      </div>
+
+      <!-- Chart container (LWC renders here) -->
+      <div class="chart-panel" id="chartContainer">
+        <!-- Active trade overlay (preserved from original) -->
+        <div class="trade-overlay" id="tradeOverlay" style="display:none">
+          <div class="trade-overlay-inner">
+            <div class="trade-countdown" id="tradeCountdown">30</div>
+            <div class="trade-overlay-label" id="tradeOverlayLabel">Trade in progress…</div>
+            <div class="trade-progress-bar"><div class="trade-progress-fill" id="tradeProgressFill"></div></div>
+            <div class="trade-overlay-dir" id="tradeOverlayDir">BUY ▲</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── INDICATOR PANEL ─── -->
+      <div class="floating-panel" id="indicatorPanel" style="display:none">
+        <div class="fp-header">
+          <span>⚙ Add Indicator</span>
+          <button class="fp-close" onclick="togglePanel('indicatorPanel')">✕</button>
+        </div>
+        <div class="fp-search-wrap">
+          <input type="text" id="indicatorSearch" placeholder="Search indicators…" oninput="filterIndicators(this.value)"/>
+        </div>
+        <div class="fp-body">
+          <div class="ind-category">
+            <div class="ind-cat-label">Trend</div>
+            <div class="ind-grid">
+              <button class="ind-item" onclick="addIndicatorUI('sma',{period:20})">SMA(20)</button>
+              <button class="ind-item" onclick="addIndicatorUI('ema',{period:20})">EMA(20)</button>
+              <button class="ind-item" onclick="addIndicatorUI('ema',{period:50})">EMA(50)</button>
+              <button class="ind-item" onclick="addIndicatorUI('ema',{period:200})">EMA(200)</button>
+              <button class="ind-item" onclick="addIndicatorUI('wma',{period:20})">WMA(20)</button>
+              <button class="ind-item" onclick="addIndicatorUI('hma',{period:20})">HMA(20)</button>
+              <button class="ind-item" onclick="addIndicatorUI('dema',{period:20})">DEMA(20)</button>
+              <button class="ind-item" onclick="addIndicatorUI('tema',{period:20})">TEMA(20)</button>
+              <button class="ind-item" onclick="addIndicatorUI('ichimoku',{})">Ichimoku</button>
+              <button class="ind-item" onclick="addIndicatorUI('supertrend',{period:10,mult:3})">Supertrend</button>
+              <button class="ind-item" onclick="addIndicatorUI('psar',{})">Parabolic SAR</button>
+              <button class="ind-item" onclick="addIndicatorUI('adx',{period:14})">ADX(14)</button>
+              <button class="ind-item" onclick="addIndicatorUI('aroon',{period:25})">Aroon(25)</button>
+              <button class="ind-item" onclick="addIndicatorUI('donchian',{period:20})">Donchian(20)</button>
+            </div>
+          </div>
+          <div class="ind-category">
+            <div class="ind-cat-label">Momentum</div>
+            <div class="ind-grid">
+              <button class="ind-item" onclick="addIndicatorUI('rsi',{period:14})">RSI(14)</button>
+              <button class="ind-item" onclick="addIndicatorUI('macd',{fast:12,slow:26,signal:9})">MACD(12,26,9)</button>
+              <button class="ind-item" onclick="addIndicatorUI('stochastic',{kPeriod:14,dPeriod:3})">Stochastic</button>
+              <button class="ind-item" onclick="addIndicatorUI('cci',{period:20})">CCI(20)</button>
+              <button class="ind-item" onclick="addIndicatorUI('williamsr',{period:14})">Williams %R</button>
+              <button class="ind-item" onclick="addIndicatorUI('atr',{period:14})">ATR(14)</button>
+            </div>
+          </div>
+          <div class="ind-category">
+            <div class="ind-cat-label">Volatility</div>
+            <div class="ind-grid">
+              <button class="ind-item" onclick="addIndicatorUI('bollinger',{period:20,mult:2})">Bollinger Bands</button>
+              <button class="ind-item" onclick="addIndicatorUI('keltner',{period:20,mult:2})">Keltner Channels</button>
+              <button class="ind-item" onclick="addIndicatorUI('donchian',{period:20})">Donchian Ch.</button>
+              <button class="ind-item" onclick="addIndicatorUI('atr',{period:14})">ATR(14)</button>
+            </div>
+          </div>
+          <div class="ind-category">
+            <div class="ind-cat-label">Volume</div>
+            <div class="ind-grid">
+              <button class="ind-item" onclick="addIndicatorUI('vwap',{})">VWAP</button>
+              <button class="ind-item" onclick="addIndicatorUI('obv',{})">OBV</button>
+              <button class="ind-item" onclick="addIndicatorUI('mfi',{period:14})">MFI(14)</button>
+            </div>
+          </div>
+        </div>
+        <!-- Active indicators -->
+        <div class="fp-active-header">Active Indicators</div>
+        <div id="activeIndicatorsPanel" class="fp-active-list"></div>
+      </div>
+
+      <!-- ─── PATTERN PANEL ─── -->
+      <div class="floating-panel" id="patternPanel" style="display:none">
+        <div class="fp-header">
+          <span>◈ Pattern Recognition</span>
+          <button class="fp-close" onclick="togglePanel('patternPanel')">✕</button>
+        </div>
+        <div class="fp-body">
+          <div class="pattern-filter-row">
+            <button class="pf-btn active" data-filter="all"     onclick="setPatternFilter('all')">All</button>
+            <button class="pf-btn"        data-filter="bullish" onclick="setPatternFilter('bullish')">Bullish</button>
+            <button class="pf-btn"        data-filter="bearish" onclick="setPatternFilter('bearish')">Bearish</button>
+            <button class="pf-btn"        data-filter="neutral" onclick="setPatternFilter('neutral')">Neutral</button>
+          </div>
+          <p class="pattern-disclaimer">Quality scores are heuristic — not validated win probabilities.</p>
+          <div id="patternsList" class="patterns-list">
+            <div class="pattern-empty">Run detection to see patterns</div>
+          </div>
+        </div>
+        <div class="fp-footer">
+          <button class="btn btn-primary" style="width:100%;font-size:.82rem;padding:8px" onclick="runPatternDetection()"><i data-lucide="search" style="width:14px;height:14px"></i> Detect Patterns</button>
+        </div>
+      </div>
+
+    </div><!-- end chart-area-wrapper -->
+
+    <!-- ─── TRADE PANEL ─── -->
+    <div class="trade-panel">
+      <div class="trade-panel-tabs">
+        <button class="tp-tab active" data-tab="trade">Trade</button>
+        <button class="tp-tab" data-tab="history">History</button>
+        <button class="tp-tab" data-tab="wallet">Wallet</button>
+        <button class="tp-tab" data-tab="analysis">Analysis</button>
+      </div>
+      
+      <!-- Low Balance Warning -->
+      <div id="lowBalanceWarning" style="display:none;background:rgba(255,69,58,.1);border:1px solid rgba(255,69,58,.3);border-radius:10px;padding:14px;margin:12px 16px 0;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:8px">💰</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--red);margin-bottom:6px">Balance: $0.00</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:10px">Deposit funds to start trading</div>
+        <button class="btn btn-primary btn-sm btn-block" onclick="document.querySelector('[data-tab=wallet]').click()">Deposit Now</button>
+      </div>
+
+      <!-- TRADE TAB -->
+      <div class="tp-content active" id="tab-trade">
+        <div class="tp-balance-row">
+          <span class="tp-bal-label">Available Balance</span>
+          <span class="tp-bal-value" id="sideBalance">$0.00</span>
+        </div>
+
+        <div class="tp-section-label">Trade Amount</div>
+        <div class="amount-grid">
+          <button class="amount-preset" data-amount="1">$1</button>
+          <button class="amount-preset" data-amount="5">$5</button>
+          <button class="amount-preset" data-amount="10">$10</button>
+          <button class="amount-preset" data-amount="25">$25</button>
+          <button class="amount-preset" data-amount="50">$50</button>
+          <button class="amount-preset" data-amount="100">$100</button>
+        </div>
+        <div class="custom-amount-wrap">
+          <span class="custom-amount-prefix">$</span>
+          <input type="number" id="tradeAmount" value="10" min="1" max="10000" placeholder="Custom amount"/>
+        </div>
+
+        <div class="tp-section-label">Expiry Time</div>
+        <div class="expiry-grid">
+          <button class="expiry-btn" data-expiry="10">10s</button>
+          <button class="expiry-btn" data-expiry="15">15s</button>
+          <button class="expiry-btn active" data-expiry="30">30s</button>
+          <button class="expiry-btn" data-expiry="60">1m</button>
+          <button class="expiry-btn" data-expiry="120">2m</button>
+          <button class="expiry-btn" data-expiry="300">5m</button>
+        </div>
+
+        <div class="payout-preview">
+          <div class="pp-row"><span>Trade Amount</span><span id="ppAmount">$10.00</span></div>
+          <div class="pp-row"><span>Payout Rate</span><span class="up" id="ppRate">82%</span></div>
+          <div class="pp-row pp-total"><span>Potential Win</span><span class="up" id="ppWin">+$8.20</span></div>
+        </div>
+
+        <div class="trade-buttons">
+          <button class="trade-btn buy-btn" id="buyBtn">
+            <span class="trade-btn-icon">▲</span>
+            <span class="trade-btn-label">BUY</span>
+            <span class="trade-btn-sub">Price will rise</span>
+          </button>
+          <button class="trade-btn sell-btn" id="sellBtn">
+            <span class="trade-btn-icon">▼</span>
+            <span class="trade-btn-label">SELL</span>
+            <span class="trade-btn-sub">Price will fall</span>
+          </button>
+        </div>
+
+        <div id="tradeStatusMsg" class="trade-status-msg" style="display:none"></div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="tp-content" id="tab-history">
+        <div class="history-header">
+          <h3>Trade History</h3>
+          <span id="historyStats" class="history-stats">0 trades</span>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">No trades yet. Place your first trade!</div>
+        </div>
+      </div>
+
+      <!-- WALLET TAB -->
+      <div class="tp-content" id="tab-wallet">
+        <div class="wallet-balance-card">
+          <div class="wbc-label">Total Balance</div>
+          <div class="wbc-value" id="walletBalance">$0.00</div>
+          <div class="wbc-sub">Available for trading</div>
+        </div>
+
+        <!-- DEPOSIT -->
+        <div class="wallet-section">
+          <h4><i data-lucide="credit-card" style="width:18px;height:18px"></i> Deposit</h4>
+          <p class="wallet-note">Minimum deposit: <strong>$5.00</strong></p>
+          <div class="deposit-presets">
+            <button class="dep-preset" data-amt="10">$10</button>
+            <button class="dep-preset" data-amt="25">$25</button>
+            <button class="dep-preset" data-amt="50">$50</button>
+            <button class="dep-preset" data-amt="100">$100</button>
+            <button class="dep-preset" data-amt="250">$250</button>
+            <button class="dep-preset" data-amt="500">$500</button>
+          </div>
+          <div class="wallet-form">
+            <div class="form-group">
+              <label>Amount (USD)</label>
+              <div class="input-icon-wrap">
+                <span class="input-prefix">$</span>
+                <input type="number" id="depositAmount" placeholder="Min $5.00" min="5"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select id="depositMethod">
+                <option value="card"><i data-lucide="credit-card" style="width:14px;height:14px"></i> Credit / Debit Card</option>
+                <option value="mpesa"><i data-lucide="smartphone" style="width:14px;height:14px"></i> M-Pesa</option>
+                <option value="crypto"><i data-lucide="bitcoin" style="width:14px;height:14px"></i> Cryptocurrency</option>
+                <option value="bank"><i data-lucide="landmark" style="width:14px;height:14px"></i> Bank Transfer</option>
+                <option value="paypal">PayPal</option>
+              </select>
+            </div>
+            <div id="cardFields" class="extra-fields">
+              <div class="form-group">
+                <label>Card Number</label>
+                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19"/>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Expiry</label><input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5"/></div>
+                <div class="form-group"><label>CVV</label><input type="text" id="cardCvv" placeholder="123" maxlength="3"/></div>
+              </div>
+            </div>
+            <div id="mpesaFields" class="extra-fields" style="display:none">
+              <div class="mpesa-header">
+                <div class="mpesa-logo"><span class="mpesa-m">M</span><span class="mpesa-pesa">-PESA</span></div>
+                <span class="mpesa-badge">Safaricom</span>
+              </div>
+              <div class="form-group">
+                <label>M-Pesa Phone Number</label>
+                <div class="input-icon-wrap mpesa-phone-wrap">
+                  <span class="input-prefix mpesa-flag">🇰🇪 +254</span>
+                  <input type="tel" id="mpesaPhone" placeholder="7XX XXX XXX" maxlength="9"/>
+                </div>
+                <p class="field-hint">Enter the number registered on M-Pesa</p>
+              </div>
+              <div class="mpesa-info-box">
+                <span class="mpesa-info-icon">ℹ️</span>
+                <p>An STK Push will be sent to your phone. Enter your M-Pesa PIN to complete.</p>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="depositBtn">Deposit Funds</button>
+          </div>
+        </div>
+
+        <!-- WITHDRAWAL -->
+        <div class="wallet-section">
+          <h4>🏦 Withdrawal</h4>
+          <p class="wallet-note">Minimum withdrawal: <strong>$10.00</strong></p>
+          <div class="wallet-form">
+            <div class="form-group">
+              <label>Amount (USD)</label>
+              <div class="input-icon-wrap">
+                <span class="input-prefix">$</span>
+                <input type="number" id="withdrawAmount" placeholder="Min $10.00" min="10"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Withdrawal Method</label>
+              <select id="withdrawMethod">
+                <option value="card">💳 Card Refund</option>
+                <option value="crypto">₿ Cryptocurrency</option>
+                <option value="bank">🏦 Bank Transfer</option>
+                <option value="paypal">🅿 PayPal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Account / Address</label>
+              <input type="text" id="withdrawAddress" placeholder="Your account details"/>
+            </div>
+            <button class="btn btn-outline btn-block" id="withdrawBtn">Request Withdrawal</button>
+          </div>
+        </div>
+
+        <!-- TRANSACTIONS -->
+        <div class="wallet-section">
+          <h4>📋 Transaction History</h4>
+          <div class="tx-list" id="txList">
+            <div class="history-empty">No transactions yet.</div>
+          </div>
+        </div>
+
+        <!-- BROKER LINKAGE -->
+        <div class="wallet-section">
+          <h4>🔗 Linked Trading Accounts</h4>
+          <p class="wallet-note">Connect external broker accounts to sync balances and copy trades.</p>
+          <div id="linkedBrokersList" class="linked-brokers-list">
+            <div class="history-empty" id="noBrokersMsg">No accounts linked yet.</div>
+          </div>
+          <button class="btn btn-outline btn-block" onclick="openLinkBrokerModal()" style="margin-top:.5rem">+ Link Broker Account</button>
+        </div>
+      </div>
+
+      <!-- ANALYSIS TAB -->
+      <div class="tp-content" id="tab-analysis">
+        <div class="analysis-header">
+          <h3>Chart Analysis</h3>
+        </div>
+
+        <!-- Drawings list -->
+        <div class="analysis-section">
+          <div class="analysis-section-title">📐 Active Drawings</div>
+          <div id="drawingsList"><div class="pattern-empty">No drawings yet</div></div>
+        </div>
+
+        <!-- Patterns list (mirrored from panel) -->
+        <div class="analysis-section">
+          <div class="analysis-section-title">◈ Detected Patterns</div>
+          <div id="patternsListSide"><div class="pattern-empty">Click Detect Patterns above</div></div>
+        </div>
+
+        <!-- Quick indicator controls -->
+        <div class="analysis-section">
+          <div class="analysis-section-title">⚙ Quick Indicators</div>
+          <div class="quick-ind-grid">
+            <button class="qi-btn" onclick="addIndicatorUI('ema',{period:20})">EMA 20</button>
+            <button class="qi-btn" onclick="addIndicatorUI('ema',{period:50})">EMA 50</button>
+            <button class="qi-btn" onclick="addIndicatorUI('bollinger',{period:20,mult:2})">BB</button>
+            <button class="qi-btn" onclick="addIndicatorUI('rsi',{period:14})">RSI</button>
+            <button class="qi-btn" onclick="addIndicatorUI('macd',{})">MACD</button>
+            <button class="qi-btn" onclick="addIndicatorUI('vwap',{})">VWAP</button>
+            <button class="qi-btn" onclick="IndicatorManager.removeAll()">Clear All</button>
+            <button class="qi-btn" onclick="applyPivots()">Pivots</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end trade-panel -->
+  </div><!-- end platform-layout -->
+
+  <!-- ─── WIN/LOSS MODAL (preserved) ─── -->
+  <div class="modal-overlay" id="resultModal" style="display:none">
+    <div class="result-modal" id="resultModalInner">
+      <div class="result-confetti" id="confettiContainer"></div>
+      <div class="result-icon" id="resultIcon">🏆</div>
+      <div class="result-title" id="resultTitle">You Won!</div>
+      <div class="result-amount" id="resultAmount">+$8.20</div>
+      <div class="result-detail" id="resultDetail">Trade closed successfully</div>
+      <div class="result-new-balance">New Balance: <strong id="resultNewBal">$108.20</strong></div>
+      <button class="btn btn-primary btn-lg" id="resultCloseBtn">Trade Again</button>
+    </div>
+  </div>
+
+  <!-- ─── DEPOSIT MODAL ─── -->
+  <div class="modal-overlay" id="depositModal" style="display:none">
+    <div class="deposit-modal">
+      <button class="modal-close" id="depositModalClose">✕</button>
+      <h3 id="quickDepTitle">💳 Quick Deposit</h3>
+      <p class="wallet-note">Minimum deposit: <strong>$5.00</strong></p>
+      <div class="quick-method-tabs">
+        <button class="qmt-btn active" data-method="card">💳 Card</button>
+        <button class="qmt-btn mpesa-tab" data-method="mpesa">📱 M-Pesa</button>
+        <button class="qmt-btn" data-method="crypto">₿ Crypto</button>
+      </div>
+      <div class="deposit-presets" style="margin-top:.8rem">
+        <button class="dep-preset" data-amt="10">$10</button>
+        <button class="dep-preset" data-amt="25">$25</button>
+        <button class="dep-preset" data-amt="50">$50</button>
+        <button class="dep-preset" data-amt="100">$100</button>
+      </div>
+      <div class="wallet-form" style="margin-top:1rem">
+        <div class="form-group">
+          <label>Amount (USD)</label>
+          <div class="input-icon-wrap">
+            <span class="input-prefix">$</span>
+            <input type="number" id="quickDepositAmt" placeholder="Min $5.00" min="5"/>
+          </div>
+        </div>
+        <div id="quickCardSection">
+          <div class="form-group">
+            <label>Card Number</label>
+            <input type="text" id="quickCard" placeholder="1234 5678 9012 3456" maxlength="19"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Expiry</label><input type="text" id="quickExpiry" placeholder="MM/YY" maxlength="5"/></div>
+            <div class="form-group"><label>CVV</label><input type="text" id="quickCvv" placeholder="123" maxlength="3"/></div>
+          </div>
+        </div>
+        <div id="quickMpesaSection" style="display:none">
+          <div class="mpesa-header">
+            <div class="mpesa-logo"><span class="mpesa-m">M</span><span class="mpesa-pesa">-PESA</span></div>
+            <span class="mpesa-badge">Safaricom</span>
+          </div>
+          <div class="form-group">
+            <label>M-Pesa Phone Number</label>
+            <div class="input-icon-wrap mpesa-phone-wrap">
+              <span class="input-prefix mpesa-flag">🇰🇪 +254</span>
+              <input type="tel" id="quickMpesaPhone" placeholder="7XX XXX XXX" maxlength="9"/>
+            </div>
+            <p class="field-hint">Enter the M-Pesa registered number</p>
+          </div>
+          <div class="mpesa-info-box">
+            <span class="mpesa-info-icon">ℹ️</span>
+            <p>An STK Push will be sent to your phone. Enter your M-Pesa PIN to complete.</p>
+          </div>
+        </div>
+        <div id="quickCryptoSection" style="display:none">
+          <div class="crypto-address-box">
+            <p class="wallet-note" style="margin-bottom:.5rem">Send USDT (TRC-20) to:</p>
+            <div class="crypto-addr-row">
+              <code id="cryptoAddr">TRx9mPesa4Tradersbloc2026DEMO</code>
+              <button class="copy-addr-btn" onclick="copyAddr()">📋 Copy</button>
+            </div>
+            <p class="field-hint">Payment confirmed automatically after 1 network confirmation.</p>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="quickDepositBtn">Deposit Now</button>
+      </div>
+      <div id="quickDepMsg" class="auth-msg" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- ─── M-PESA STK PUSH MODAL (preserved) ─── -->
+  <div class="modal-overlay" id="mpesaModal" style="display:none">
+    <div class="mpesa-modal">
+      <div id="mpesaStep1">
+        <div class="mpesa-modal-logo">
+          <span class="mpesa-m lg">M</span><span class="mpesa-pesa lg">-PESA</span>
+        </div>
+        <div class="mpesa-spinner-wrap"><div class="mpesa-spinner"></div></div>
+        <h3 class="mpesa-modal-title">Sending STK Push…</h3>
+        <p class="mpesa-modal-sub">A payment request is being sent to</p>
+        <div class="mpesa-phone-display" id="mpesaPhoneDisplay">+254 7XX XXX XXX</div>
+        <p class="mpesa-modal-hint">Check your phone and enter your M-Pesa PIN to confirm the payment.</p>
+        <div class="mpesa-amount-preview">Amount: <strong id="mpesaAmtDisplay">KES —</strong></div>
+      </div>
+      <div id="mpesaStep2" style="display:none">
+        <div class="mpesa-phone-mockup">
+          <div class="phone-screen">
+            <div class="phone-header"><span>📶</span><span>Safaricom</span><span>🔋</span></div>
+            <div class="phone-notif">
+              <div class="notif-icon">M</div>
+              <div class="notif-body">
+                <div class="notif-title">M-PESA</div>
+                <div class="notif-msg" id="mpesaNotifMsg">Pay KES 500.00 to Tradersbloc. Enter PIN:</div>
+              </div>
+            </div>
+            <div class="pin-dots">
+              <span class="pin-dot" id="pd1"></span><span class="pin-dot" id="pd2"></span>
+              <span class="pin-dot" id="pd3"></span><span class="pin-dot" id="pd4"></span>
+            </div>
+            <div class="pin-label" id="pinStatus">Waiting for PIN…</div>
+          </div>
+        </div>
+        <p class="mpesa-modal-hint" style="text-align:center;margin-top:1rem">Simulating PIN entry on your device…</p>
+      </div>
+      <div id="mpesaStep3" style="display:none">
+        <div class="mpesa-success-icon">✅</div>
+        <h3 class="mpesa-modal-title">Payment Confirmed!</h3>
+        <p class="mpesa-modal-sub">M-Pesa transaction successful</p>
+        <div class="mpesa-receipt">
+          <div class="receipt-row"><span>Transaction ID</span><strong id="mpesaTxId">—</strong></div>
+          <div class="receipt-row"><span>Amount</span><strong id="mpesaReceiptAmt">—</strong></div>
+          <div class="receipt-row"><span>Phone</span><strong id="mpesaReceiptPhone">—</strong></div>
+          <div class="receipt-row"><span>Date</span><strong id="mpesaReceiptDate">—</strong></div>
+          <div class="receipt-row"><span>Status</span><strong class="up">✅ Completed</strong></div>
+        </div>
+        <button class="btn btn-primary btn-block" id="mpesaDoneBtn" style="margin-top:1.2rem">Continue Trading 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── BROKER LINK MODAL ─── -->
+  <div class="modal-overlay" id="brokerModal" style="display:none" onclick="if(event.target===this)closeBrokerModal()">
+    <div class="deposit-modal" style="max-width:480px">
+      <button class="modal-close" onclick="closeBrokerModal()">✕</button>
+      <h3>🔗 Link Broker Account</h3>
+      <p class="wallet-note" style="margin-bottom:1rem">Connect your external trading account. Supported platforms:</p>
+
+      <!-- Platform selector -->
+      <div class="broker-grid">
+        <button class="broker-card active" data-broker="deriv" onclick="selectBroker('deriv',this)">
+          <div class="broker-logo" style="background:linear-gradient(135deg,#ff444f,#cc1f2a)">D</div>
+          <div class="broker-name">Deriv</div>
+          <div class="broker-tag">Binary · MT5 · cTrader</div>
+        </button>
+        <button class="broker-card" data-broker="mt4" onclick="selectBroker('mt4',this)">
+          <div class="broker-logo" style="background:linear-gradient(135deg,#1a6fef,#0d47a1)">MT4</div>
+          <div class="broker-name">MetaTrader 4</div>
+          <div class="broker-tag">Forex · CFDs</div>
+        </button>
+        <button class="broker-card" data-broker="mt5" onclick="selectBroker('mt5',this)">
+          <div class="broker-logo" style="background:linear-gradient(135deg,#1a6fef,#0d47a1)">MT5</div>
+          <div class="broker-name">MetaTrader 5</div>
+          <div class="broker-tag">Forex · Stocks · Crypto</div>
+        </button>
+        <button class="broker-card" data-broker="binance" onclick="selectBroker('binance',this)">
+          <div class="broker-logo" style="background:linear-gradient(135deg,#f0b90b,#d4a017)">B</div>
+          <div class="broker-name">Binance</div>
+          <div class="broker-tag">Crypto Exchange</div>
+        </button>
+        <button class="broker-card" data-broker="ic_markets" onclick="selectBroker('ic_markets',this)">
+          <div class="broker-logo" style="background:linear-gradient(135deg,#e63946,#9b2226)">IC</div>
+          <div class="broker-name">IC Markets</div>
+          <div class="broker-tag">Forex · CFDs</div>
+        </button>
+        <button class="broker-card" data-broker="exness" onclick="selectBroker('exness',this)">
+          <div class="broker-logo" style="background:linear-gradient(135deg,#00b4d8,#0077b6)">EX</div>
+          <div class="broker-name">Exness</div>
+          <div class="broker-tag">Forex · Crypto</div>
+        </button>
+      </div>
+
+      <!-- Dynamic credential form -->
+      <div id="brokerCredForm" class="wallet-form" style="margin-top:1.2rem">
+
+        <!-- Deriv fields (default) -->
+        <div id="brokerFields-deriv">
+          <div class="broker-info-box">
+            <div class="broker-info-icon">ℹ️</div>
+            <div>
+              <strong>Deriv API Token</strong>
+              <p>Create a token at <a href="https://app.deriv.com/account/api-token" target="_blank" style="color:var(--primary)">app.deriv.com/account/api-token</a> with at least <em>Read</em> scope. For trade execution, also enable <em>Trade</em> scope.</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>API Token</label>
+            <div class="input-icon-wrap">
+              <input type="password" id="derivApiToken" placeholder="e.g. a1-xxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+              <button type="button" class="toggle-pw" onclick="togglePw('derivApiToken',this)">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Server</label>
+            <select id="derivServer">
+              <option value="wss://ws.binaryws.com/websockets/v3?app_id=1089">Deriv Live (Real)</option>
+              <option value="wss://ws.derivws.com/websockets/v3?app_id=36544">Deriv Demo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- MT4 / MT5 fields -->
+        <div id="brokerFields-mt4" style="display:none">
+          <div class="form-group"><label>Login Number</label><input type="text" id="mt4Login" placeholder="e.g. 12345678"/></div>
+          <div class="form-group"><label>Password</label><input type="password" id="mt4Password" placeholder="Investor or master password"/></div>
+          <div class="form-group"><label>Server</label><input type="text" id="mt4Server" placeholder="e.g. ICMarkets-Live01"/></div>
+        </div>
+        <div id="brokerFields-mt5" style="display:none">
+          <div class="form-group"><label>Login Number</label><input type="text" id="mt5Login" placeholder="e.g. 12345678"/></div>
+          <div class="form-group"><label>Password</label><input type="password" id="mt5Password" placeholder="Investor or master password"/></div>
+          <div class="form-group"><label>Server</label><input type="text" id="mt5Server" placeholder="e.g. ICMarkets-MT5Live01"/></div>
+        </div>
+
+        <!-- Binance fields -->
+        <div id="brokerFields-binance" style="display:none">
+          <div class="broker-info-box">
+            <div class="broker-info-icon">ℹ️</div>
+            <div><strong>Binance API Key</strong><p>Create a read-only API key in your Binance account settings. Never share your secret key.</p></div>
+          </div>
+          <div class="form-group"><label>API Key</label><input type="text" id="binanceApiKey" placeholder="Binance API Key"/></div>
+          <div class="form-group"><label>API Secret</label><input type="password" id="binanceApiSecret" placeholder="Binance API Secret"/></div>
+        </div>
+
+        <!-- Generic fields for IC Markets / Exness -->
+        <div id="brokerFields-ic_markets" style="display:none">
+          <div class="form-group"><label>Account Number</label><input type="text" id="icLogin" placeholder="e.g. 40123456"/></div>
+          <div class="form-group"><label>Password</label><input type="password" id="icPassword" placeholder="Trading password"/></div>
+          <div class="form-group"><label>Server</label><input type="text" id="icServer" placeholder="e.g. ICMarketsSC-Live04"/></div>
+        </div>
+        <div id="brokerFields-exness" style="display:none">
+          <div class="form-group"><label>Account Number</label><input type="text" id="exLogin" placeholder="e.g. 87654321"/></div>
+          <div class="form-group"><label>Password</label><input type="password" id="exPassword" placeholder="Trading password"/></div>
+          <div class="form-group"><label>Server</label><input type="text" id="exServer" placeholder="e.g. Exness-MT5Real8"/></div>
+        </div>
+
+        <div id="brokerLinkMsg" class="auth-msg" style="display:none"></div>
+        <button class="btn btn-primary btn-block" onclick="linkBrokerAccount()" id="linkBrokerBtn">
+          🔗 Link Account
+        </button>
+        <p style="font-size:.72rem;color:var(--text3);text-align:center;margin-top:.5rem">
+          Credentials are stored locally. Tradersbloc never transmits them to our servers.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error toast -->
+  <div id="mpesaErrorToast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a0a0e;border:1px solid rgba(255,77,106,.35);color:#ff4d6a;padding:12px 24px;border-radius:10px;font-size:.88rem;font-weight:600;z-index:2000;box-shadow:0 4px 24px rgba(0,0,0,.5);max-width:90vw;text-align:center;"></div>
+
+  <!-- ─── SCRIPTS ─── -->
+  <script src="api-client.js"></script>
+  <script src="chart-engine.js"></script>
+  <script src="indicators.js"></script>
+  <script src="patterns.js"></script>
+  <script src="drawing-tools.js"></script>
+  <!-- ─── LEFT TOOLBAR LOGIC ─── -->
+  <script>
+    /* Active tool state */
+    let _activeTool = 'cursor';
+
+    function setDrawTool(tool, btn) {
+      _activeTool = tool;
+      // Remove active from all toolbar buttons
+      document.querySelectorAll('.ltb-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      // Update chart cursor
+      const chartEl = document.getElementById('chartContainer');
+      if (chartEl) {
+        chartEl.style.cursor = (tool === 'crosshair') ? 'crosshair'
+                             : (tool === 'hline' || tool === 'vline') ? 'crosshair'
+                             : 'default';
+      }
+      // Tell DrawingTools if it's ready
+      if (typeof DrawingTools !== 'undefined') {
+        DrawingTools.setTool(tool === 'cursor' || tool === 'crosshair' ? null : tool);
+      }
+    }
+
+    function applyFibonacci() {
+      if (typeof chartCandles !== 'undefined' && chartCandles.length >= 20) {
+        const slice = chartCandles.slice(-50);
+        const high  = Math.max(...slice.map(c => c.high));
+        const low   = Math.min(...slice.map(c => c.low));
+        if (typeof DrawingTools !== 'undefined') DrawingTools.addFibonacci(high, low);
+      }
+    }
+
+    function confirmClearAll() {
+      if (confirm('Remove all drawings from the chart?')) {
+        if (typeof DrawingTools !== 'undefined') DrawingTools.clearAll();
+      }
+    }
+
+    function showToolFeedback(btn, msg) {
+      const label = btn.querySelector('.ltb-label');
+      if (!label) return;
+      const orig = label.textContent;
+      label.textContent = msg;
+      label.style.color = 'var(--primary)';
+      setTimeout(() => { label.textContent = orig; label.style.color = ''; }, 1200);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'v' || e.key === 'V') setDrawTool('cursor',    document.getElementById('toolCursor'));
+      if (e.key === 'c' && !e.ctrlKey && !e.metaKey) setDrawTool('crosshair', document.getElementById('toolCrosshair'));
+      if (e.key === 'h' || e.key === 'H') setDrawTool('hline',     document.getElementById('toolHline'));
+    });
+  </script>
+
+  <script src="mpesa.js"></script>
+  <script src="platform.js"></script>
+  <script src="broker-link.js"></script>
+  <script src="workspaces.js"></script>
+  <script src="fix-chart.js"></script>
+  
+  <script>
+    // Initialize Lucide icons for platform
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+          console.log('✓ Platform icons initialized');
+          
+          // Force refresh toolbar icons specifically
+          setTimeout(() => {
+            lucide.createIcons();
+            console.log('✓ Toolbar icons refreshed');
+          }, 500);
+        }
+      }, 200);
+    });
+    
+    // Also refresh when chart initializes
+    if (typeof ChartEngine !== 'undefined') {
+      const originalInit = ChartEngine.init;
+      ChartEngine.init = function(...args) {
+        const result = originalInit.apply(this, args);
+        if (typeof lucide !== 'undefined') {
+          setTimeout(() => lucide.createIcons(), 100);
+        }
+        return result;
+      };
+    }
+  </script>
+  
+  <!-- Navigation Handler for Top Bar Buttons -->
+  <script>
+    function switchTool(tool, button) {
+      // Define navigation routes
+      const routes = {
+        'dashboard': 'platform.html',
+        'bot-builder': 'bot-builder-new.html',
+        'volt-ai': 'volt-ai.html',
+        'auto-ai': 'auto-ai.html',
+        'free-bots': 'free-bots.html',
+        'premium-bots': 'premium-ai.html',
+        'quick-bot': 'quick-bot.html',
+        'signal-ai': 'signal-ai.html',
+        'manual-trader': 'platform.html',
+        'bulk-trader': 'bulk-trader.html',
+        'apex-bot': 'apex-trader.html',
+        'copy-trader': 'copy-trader.html',
+        'analysis-tools': 'volt-ai.html',
+        'speedbot': 'speed-bot.html'
+      };
+      
+      // Navigate to the tool page
+      if (routes[tool]) {
+        window.location.href = routes[tool];
+      } else {
+        console.warn('Tool page not yet implemented:', tool);
+        showToolComingSoon(tool, button);
+      }
+    }
+    
+    function showToolComingSoon(tool, button) {
+      const toolName = tool.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      
+      // Create modal
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;';
+      
+      modal.innerHTML = `
+        <div class="auth-card" style="max-width:400px;text-align:center;animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)">
+          <div style="font-size:3rem;margin-bottom:1rem;">🚀</div>
+          <h2 style="margin-bottom:1rem;">${toolName}</h2>
+          <p style="color:var(--text2);margin-bottom:1.5rem;">
+            This feature is currently under development and will be available soon!
+          </p>
+          <div style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+            <p style="font-size:0.9rem;color:var(--text2);margin:0;">
+              <strong style="color:var(--primary);">Coming Soon:</strong><br/>
+              • AI-powered trading automation<br/>
+              • Advanced strategy builder<br/>
+              • Real-time signal generation<br/>
+              • Backtesting capabilities
+            </p>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="this.closest('.modal-overlay').remove()">
+            Got It
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
+    }
+  </script>
+</body>
+</html>

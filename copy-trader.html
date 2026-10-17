@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Copy Trader — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .copy-layout { display: grid; grid-template-columns: 1fr 360px; height: 100%; gap: 0; background: var(--surface-primary); }
+    .copy-main { padding: var(--space-6); overflow-y: auto; }
+    .copy-toolbar { display: flex; gap: var(--space-4); margin-bottom: var(--space-6); flex-wrap: wrap; }
+    .filter-group { flex: 1; min-width: 180px; }
+    .filter-label { display: block; font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-1); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .filter-select { width: 100%; padding: var(--space-2) var(--space-3); background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-primary); font-size: var(--text-sm); cursor: pointer; }
+    .filter-select:focus { outline: none; border-color: var(--accent-emerald); }
+    .section-title { font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-4) 0; }
+    .providers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
+    .provider-card { background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-5); cursor: pointer; transition: all var(--transition-base); }
+    .provider-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    .provider-card.copying { border-color: var(--accent-emerald); background: var(--accent-emerald-subtle); }
+    .provider-header { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+    .provider-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--surface-secondary); border: 1px solid var(--border-default); display: flex; align-items: center; justify-content: center; font-size: var(--text-lg); font-weight: 700; color: var(--accent-emerald); }
+    .provider-info { flex: 1; }
+    .provider-name { font-size: var(--text-md); font-weight: 600; color: var(--text-primary); margin: 0 0 2px 0; display: flex; align-items: center; gap: var(--space-1); }
+    .provider-meta { font-size: var(--text-xs); color: var(--text-secondary); }
+    .provider-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin: var(--space-3) 0; padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .metric { text-align: center; }
+    .metric-label { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .metric-value { font-size: var(--text-md); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .metric-value.positive { color: var(--state-positive); }
+    .provider-desc { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; margin-bottom: var(--space-3); }
+    .provider-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-bottom: var(--space-3); }
+    .tag { padding: 3px 8px; background: var(--surface-secondary); border-radius: var(--radius-sm); font-size: var(--text-xs); color: var(--text-secondary); }
+    .copy-btn { width: 100%; padding: var(--space-3); border: none; border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+    .copy-btn.start { background: var(--accent-emerald); color: var(--text-inverse); }
+    .copy-btn.start:hover { background: #059669; }
+    .copy-btn.copying { background: var(--surface-secondary); color: var(--text-secondary); }
+    .alloc-panel { background: var(--surface-elevated); border-left: 1px solid var(--border-subtle); overflow-y: auto; display: flex; flex-direction: column; }
+    .alloc-header { padding: var(--space-5); border-bottom: 1px solid var(--border-subtle); background: var(--surface-secondary); }
+    .alloc-content { flex: 1; padding: var(--space-5); }
+    .alloc-card { background: var(--surface-secondary); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-3); }
+    .alloc-card-header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+    .mini-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-elevated); display: flex; align-items: center; justify-content: center; font-size: var(--text-sm); font-weight: 700; color: var(--accent-emerald); }
+    .alloc-name { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); }
+    .alloc-status { font-size: var(--text-xs); color: var(--state-positive); }
+    .stop-btn { padding: 3px 8px; background: var(--state-negative-bg); border: none; border-radius: var(--radius-sm); color: var(--state-negative); font-size: var(--text-xs); font-weight: 600; cursor: pointer; }
+    .alloc-input-group { margin-bottom: var(--space-3); }
+    .alloc-input-label { display: block; font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-1); }
+    .alloc-input { width: 100%; padding: var(--space-2); background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+    .alloc-slider { width: 100%; margin: var(--space-2) 0; }
+    .alloc-footer { padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-subtle); background: var(--surface-secondary); }
+    .total-alloc { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); }
+    .total-label { font-size: var(--text-sm); color: var(--text-secondary); }
+    .total-value { font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+    .empty-state { text-align: center; padding: var(--space-12) var(--space-4); }
+    @media (max-width: 1200px) { .copy-layout { grid-template-columns: 1fr; } .alloc-panel { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar">
+      <div class="topbar-left"><button class="sidebar-toggle"><i data-lucide="menu"></i></button><img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/><span class="topbar-brand">Tradersbloc</span></div>
+      <div class="topbar-center"><span class="topbar-title">Copy Trader</span></div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-secondary"><i data-lucide="filter" style="width:14px;height:14px;"></i> Filters</button>
+        <button class="btn btn-sm btn-primary"><i data-lucide="users" style="width:14px;height:14px;"></i> My Copies</button>
+      </div>
+    </header>
+    <aside class="sidebar"><nav class="sidebar-nav" id="sidebarNav"></nav></aside>
+    <main class="main-content">
+      <div class="copy-layout">
+        <div class="copy-main">
+          <div class="copy-toolbar">
+            <div class="filter-group"><label class="filter-label">Performance</label><select class="filter-select" onchange="filterProviders()"><option value="all">All Performance</option><option value="top">Top Performers</option><option value="consistent">Consistent</option></select></div>
+            <div class="filter-group"><label class="filter-label">Risk Level</label><select class="filter-select" onchange="filterProviders()"><option value="all">All Risk Levels</option><option value="low">Low Risk</option><option value="medium">Medium Risk</option><option value="high">High Risk</option></select></div>
+            <div class="filter-group"><label class="filter-label">Min Win Rate</label><select class="filter-select" onchange="filterProviders()"><option value="0">Any</option><option value="60">60%+</option><option value="70">70%+</option><option value="80">80%+</option></select></div>
+          </div>
+          <h2 class="section-title">Top Traders</h2>
+          <div class="providers-grid" id="providersGrid"></div>
+        </div>
+        <aside class="alloc-panel">
+          <div class="alloc-header"><h2 class="section-title" style="margin:0 0 var(--space-1) 0">My Copies</h2><p style="font-size:var(--text-sm);color:var(--text-secondary);margin:0">Manage your copy positions</p></div>
+          <div class="alloc-content" id="allocationContent">
+            <div class="empty-state"><i data-lucide="bar-chart-2" style="width:48px;height:48px;color:var(--text-tertiary);margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"></i><p style="color:var(--text-secondary)">No active copy positions</p><p style="font-size:var(--text-xs);color:var(--text-tertiary)">Select a trader to start copying</p></div>
+          </div>
+          <div class="alloc-footer">
+            <div class="total-alloc"><span class="total-label">Total Allocated:</span><span class="total-value" id="totalAllocation">$0</span></div>
+            <button class="btn btn-sm btn-primary btn-block" onclick="saveAllocations()">Save Changes</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <script src="shared-components.js"></script>
+  <script>
+    lucide.createIcons();
+    const providers = [
+      { id: 1, name: "Alex_Crypto", avatar: "A", verified: true, winRate: 84, roi: "+156%", followers: "1.2K", copiers: 340, maxDrawdown: "-8%", trades: 247, description: "Swing trader focusing on major cryptocurrencies with risk management", tags: ["BTC", "ETH", "Medium Risk"], copying: false, allocation: 5000 },
+      { id: 2, name: "TraderPro", avatar: "T", verified: true, winRate: 78, roi: "+132%", followers: "890", copiers: 215, maxDrawdown: "-12%", trades: 412, description: "Scalping and day trading specialist. High frequency strategy", tags: ["Scalping", "High Risk"], copying: false, allocation: 3000 },
+      { id: 3, name: "SafetyFirst", avatar: "S", verified: true, winRate: 72, roi: "+68%", followers: "2.1K", copiers: 580, maxDrawdown: "-5%", trades: 156, description: "Conservative long-term strategy with strict stop losses", tags: ["Low Risk", "Long-term"], copying: false, allocation: 10000 },
+      { id: 4, name: "MomentumKing", avatar: "M", verified: false, winRate: 88, roi: "+189%", followers: "650", copiers: 128, maxDrawdown: "-15%", trades: 328, description: "Momentum and breakout trading across multiple timeframes", tags: ["Momentum", "BTC", "High Risk"], copying: false, allocation: 2000 },
+      { id: 5, name: "AI_Trader_X", avatar: "X", verified: true, winRate: 76, roi: "+112%", followers: "1.5K", copiers: 420, maxDrawdown: "-9%", trades: 512, description: "Algorithm-based trading with machine learning optimization", tags: ["AI", "Medium Risk", "Automated"], copying: false, allocation: 7500 },
+      { id: 6, name: "DeFi_Master", avatar: "D", verified: true, winRate: 81, roi: "+145%", followers: "980", copiers: 290, maxDrawdown: "-11%", trades: 203, description: "DeFi and altcoin specialist with yield farming integration", tags: ["DeFi", "Altcoins", "Medium Risk"], copying: false, allocation: 4000 }
+    ];
+    function renderProviders() {
+      document.getElementById('providersGrid').innerHTML = providers.map(p => `
+        <div class="provider-card ${p.copying ? 'copying' : ''}" onclick="toggleCopy(${p.id})">
+          <div class="provider-header">
+            <div class="provider-avatar">${p.avatar}</div>
+            <div class="provider-info">
+              <h3 class="provider-name">${p.name} ${p.verified ? '<i data-lucide="badge-check" style="width:14px;height:14px;color:var(--accent-blue)"></i>' : ''}</h3>
+              <p class="provider-meta">${p.copiers} copiers / ${p.trades} trades</p>
+            </div>
+          </div>
+          <div class="provider-metrics">
+            <div class="metric"><div class="metric-label">Win Rate</div><div class="metric-value positive">${p.winRate}%</div></div>
+            <div class="metric"><div class="metric-label">ROI</div><div class="metric-value positive">${p.roi}</div></div>
+            <div class="metric"><div class="metric-label">Max DD</div><div class="metric-value">${p.maxDrawdown}</div></div>
+          </div>
+          <p class="provider-desc">${p.description}</p>
+          <div class="provider-tags">${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+          <button class="copy-btn ${p.copying ? 'copying' : 'start'}" onclick="event.stopPropagation(); toggleCopy(${p.id})">${p.copying ? 'Copying' : 'Start Copying'}</button>
+        </div>`).join('');
+      lucide.createIcons();
+    }
+    window.toggleCopy = function(id) { const p = providers.find(p => p.id === id); if (p) { p.copying = !p.copying; renderProviders(); updateAllocationPanel(); } };
+    function updateAllocationPanel() {
+      const c = providers.filter(p => p.copying);
+      const el = document.getElementById('allocationContent');
+      if (!c.length) {
+        el.innerHTML = '<div class="empty-state"><i data-lucide="bar-chart-2" style="width:48px;height:48px;color:var(--text-tertiary);margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"></i><p style="color:var(--text-secondary)">No active copy positions</p><p style="font-size:var(--text-xs);color:var(--text-tertiary)">Select a trader to start copying</p></div>';
+      } else {
+        el.innerHTML = c.map(p => `
+          <div class="alloc-card">
+            <div class="alloc-card-header">
+              <div class="mini-avatar">${p.avatar}</div>
+              <div style="flex:1"><div class="alloc-name">${p.name}</div><div class="alloc-status">Active</div></div>
+              <button class="stop-btn" onclick="toggleCopy(${p.id})">Stop</button>
+            </div>
+            <div class="alloc-input-group"><label class="alloc-input-label">Allocation Amount</label><input type="number" class="alloc-input" value="${p.allocation}" onchange="updateAllocation(${p.id}, this.value)"></div>
+            <div class="alloc-input-group"><label class="alloc-input-label">Copy Percentage: <span id="pct-${p.id}">100</span>%</label><input type="range" class="alloc-slider" min="10" max="100" value="100" step="10" oninput="document.getElementById('pct-${p.id}').textContent = this.value"></div>
+          </div>`).join('');
+      }
+      updateTotalAllocation(); lucide.createIcons();
+    }
+    window.updateAllocation = function(id, v) { const p = providers.find(p => p.id === id); if (p) { p.allocation = parseFloat(v) || 0; updateTotalAllocation(); } };
+    function updateTotalAllocation() { const t = providers.filter(p => p.copying).reduce((s, p) => s + p.allocation, 0); document.getElementById('totalAllocation').textContent = '$' + t.toLocaleString(); }
+    window.saveAllocations = function() { const c = providers.filter(p => p.copying); if (!c.length) { alert('No positions to save'); return; } alert(`Saved! Copying ${c.length} traders. Total: $${providers.filter(p => p.copying).reduce((s, p) => s + p.allocation, 0).toLocaleString()}`); };
+    window.filterProviders = function() { renderProviders(); };
+    renderProviders(); updateAllocationPanel();
+  </script>
+</body>
+</html>

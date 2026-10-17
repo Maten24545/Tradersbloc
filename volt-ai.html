@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Volt AI — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .volt-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr 340px;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+      gap: 0;
+      background: var(--surface-primary);
+    }
+    
+    .volt-toolbar {
+      grid-column: 1 / 4;
+      background: var(--surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+    
+    .instrument-selector {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      flex: 1;
+    }
+    
+    .instrument-btn {
+      padding: var(--space-2) var(--space-3);
+      background: transparent;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      transition: all var(--transition-base);
+    }
+    
+    .instrument-btn:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    
+    .instrument-btn.active {
+      background: var(--surface-elevated);
+      border-color: var(--accent-emerald);
+      color: var(--text-primary);
+    }
+    
+    .instrument-price {
+      margin-left: var(--space-2);
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-emerald);
+    }
+    
+    .timeframe-group {
+      display: flex;
+      gap: 2px;
+      background: var(--surface-secondary);
+      padding: 2px;
+      border-radius: var(--radius-md);
+    }
+    
+    .tf-btn {
+      padding: var(--space-1) var(--space-3);
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+    }
+    
+    .tf-btn:hover {
+      color: var(--text-secondary);
+      background: var(--surface-hover);
+    }
+    
+    .tf-btn.active {
+      background: var(--accent-emerald);
+      color: var(--text-inverse);
+    }
+    
+    .market-stats {
+      background: var(--surface-elevated);
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      padding: var(--space-4);
+    }
+    
+    .stat-group {
+      margin-bottom: var(--space-5);
+    }
+    
+    .stat-group-title {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-3);
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-2) 0;
+    }
+    
+    .stat-row + .stat-row {
+      border-top: 1px solid var(--border-subtle);
+    }
+    
+    .stat-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    
+    .stat-value {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+    }
+    
+    .stat-value.positive { color: var(--success-default); }
+    .stat-value.negative { color: var(--danger-default); }
+    
+    .chart-main {
+      background: var(--surface-primary);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    
+    .chart-controls {
+      display: flex;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    
+    .control-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .indicator-chip {
+      padding: var(--space-1) var(--space-2);
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    
+    .indicator-chip:hover {
+      border-color: var(--accent-emerald);
+      color: var(--text-primary);
+    }
+    
+    .indicator-chip.active {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+    }
+    
+    .chart-container {
+      flex: 1;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      position: relative;
+      min-height: 500px;
+    }
+    
+    .ai-panel {
+      background: var(--surface-elevated);
+      border-left: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+    
+    .ai-section {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+    }
+    
+    .ai-section-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-3);
+    }
+    
+    .ai-section-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--accent-emerald);
+    }
+    
+    .ai-section-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    
+    .signal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    
+    .signal-badge.buy {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--success-default);
+    }
+    
+    .signal-badge.sell {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger-default);
+    }
+    
+    .analysis-content {
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+    
+    .confidence-bar {
+      margin-top: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    
+    .confidence-bar-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      min-width: 70px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .confidence-bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--surface-primary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .confidence-bar-fill {
+      height: 100%;
+      background: var(--accent-emerald);
+      border-radius: 3px;
+      transition: width var(--transition-slow);
+    }
+    
+    .confidence-value {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      min-width: 40px;
+      text-align: right;
+    }
+    
+    .price-targets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+    
+    .price-target {
+      padding: var(--space-2);
+      background: var(--surface-elevated);
+      border-radius: var(--radius-sm);
+    }
+    
+    .price-target-label {
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    
+    .price-target-value {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .price-target-value.positive { color: var(--success-default); }
+    .price-target-value.negative { color: var(--danger-default); }
+    
+    .analysis-item {
+      padding: var(--space-3);
+      background: var(--surface-elevated);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-2);
+    }
+    
+    .analysis-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .analysis-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    
+    @media (max-width: 1280px) {
+      .volt-layout {
+        grid-template-columns: 200px 1fr 300px;
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      .volt-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr auto;
+      }
+      
+      .market-stats,
+      .ai-panel {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" aria-label="Toggle sidebar">
+          <i data-lucide="menu"></i>
+        </button>
+        <img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/>
+        <span class="topbar-brand">Tradersbloc</span>
+      </div>
+      <div class="topbar-center">
+        <span class="topbar-title">Volt AI</span>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-icon-btn" aria-label="Notifications">
+          <i data-lucide="bell"></i>
+        </button>
+        <button class="topbar-icon-btn" aria-label="Settings">
+          <i data-lucide="settings"></i>
+        </button>
+        <div class="user-menu">
+          <button class="user-menu-trigger">
+            <span class="user-avatar">T</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="volt-layout">
+        <!-- Toolbar -->
+        <div class="volt-toolbar">
+          <div class="instrument-selector">
+            <button class="instrument-btn active" data-symbol="BTCUSDT">
+              <i data-lucide="bitcoin" style="width:16px;height:16px;"></i>
+              BTC/USDT
+              <span class="instrument-price">$63,450</span>
+            </button>
+            <button class="instrument-btn" data-symbol="ETHUSD">
+              <i data-lucide="zap" style="width:16px;height:16px;"></i>
+              ETH/USD
+            </button>
+            <button class="instrument-btn" data-symbol="EURUSD">
+              <i data-lucide="trending-up" style="width:16px;height:16px;"></i>
+              EUR/USD
+            </button>
+          </div>
+          
+          <div class="timeframe-group">
+            <button class="tf-btn" data-tf="1">1m</button>
+            <button class="tf-btn" data-tf="5">5m</button>
+            <button class="tf-btn active" data-tf="15">15m</button>
+            <button class="tf-btn" data-tf="30">30m</button>
+            <button class="tf-btn" data-tf="60">1h</button>
+            <button class="tf-btn" data-tf="240">4h</button>
+            <button class="tf-btn" data-tf="D">1D</button>
+          </div>
+          
+          <button class="btn btn-sm btn-primary">
+            <i data-lucide="zap" style="width:14px;height:14px;"></i>
+            AI Analysis
+          </button>
+        </div>
+        
+        <!-- Market Statistics -->
+        <div class="market-stats">
+          <div class="stat-group">
+            <div class="stat-group-title">Market Data</div>
+            <div class="stat-row">
+              <span class="stat-label">24h High</span>
+              <span class="stat-value positive">$64,280</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">24h Low</span>
+              <span class="stat-value negative">$62,110</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">24h Volume</span>
+              <span class="stat-value">$28.4B</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">24h Change</span>
+              <span class="stat-value positive">+2.34%</span>
+            </div>
+          </div>
+          
+          <div class="stat-group">
+            <div class="stat-group-title">Technical Indicators</div>
+            <div class="stat-row">
+              <span class="stat-label">RSI (14)</span>
+              <span class="stat-value">58.42</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">MACD</span>
+              <span class="stat-value positive">+142.5</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">MA (50)</span>
+              <span class="stat-value">$62,845</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">MA (200)</span>
+              <span class="stat-value">$58,320</span>
+            </div>
+          </div>
+          
+          <div class="stat-group">
+            <div class="stat-group-title">Market Sentiment</div>
+            <div class="stat-row">
+              <span class="stat-label">Fear & Greed</span>
+              <span class="stat-value positive">68 (Greed)</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Long/Short</span>
+              <span class="stat-value">1.84</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Funding Rate</span>
+              <span class="stat-value positive">+0.012%</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Chart Area -->
+        <div class="chart-main">
+          <div class="chart-controls">
+            <div class="control-group">
+              <span class="control-label">Overlays</span>
+              <button class="indicator-chip active">MA(20)</button>
+              <button class="indicator-chip active">MA(50)</button>
+              <button class="indicator-chip">Bollinger</button>
+              <button class="indicator-chip">Ichimoku</button>
+            </div>
+            <div class="control-group">
+              <span class="control-label">Oscillators</span>
+              <button class="indicator-chip active">RSI</button>
+              <button class="indicator-chip">MACD</button>
+              <button class="indicator-chip">Stoch</button>
+            </div>
+          </div>
+          <div class="chart-container" id="voltChart"></div>
+        </div>
+        
+        <!-- AI Analysis Panel -->
+        <div class="ai-panel">
+          <div class="ai-section">
+            <div class="ai-section-header">
+              <i data-lucide="sparkles" class="ai-section-icon"></i>
+              <span class="ai-section-title">AI Recommendation</span>
+              <span class="signal-badge buy">BUY</span>
+            </div>
+            <div class="analysis-content">
+              Strong bullish momentum detected. Price has broken above the 50-day MA with increasing volume. Technical indicators suggest continued upward movement.
+            </div>
+            <div class="confidence-bar">
+              <span class="confidence-bar-label">Confidence</span>
+              <div class="confidence-bar-track">
+                <div class="confidence-bar-fill" style="width: 78%;"></div>
+              </div>
+              <span class="confidence-value">78%</span>
+            </div>
+            <div class="price-targets">
+              <div class="price-target">
+                <div class="price-target-label">Target</div>
+                <div class="price-target-value positive">$66,200</div>
+              </div>
+              <div class="price-target">
+                <div class="price-target-label">Stop Loss</div>
+                <div class="price-target-value negative">$62,100</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="ai-section">
+            <div class="ai-section-header">
+              <i data-lucide="brain" class="ai-section-icon"></i>
+              <span class="ai-section-title">Market Analysis</span>
+            </div>
+            <div class="analysis-item">
+              <div class="analysis-title">
+                <i data-lucide="trending-up" style="width:14px;height:14px;color:var(--success-default);"></i>
+                Bullish Trend Confirmed
+              </div>
+              <div class="analysis-content">
+                Price action above both 50 and 200-day moving averages. Higher highs and higher lows pattern established.
+              </div>
+            </div>
+            <div class="analysis-item">
+              <div class="analysis-title">
+                <i data-lucide="volume-2" style="width:14px;height:14px;color:var(--accent-emerald);"></i>
+                Strong Volume Profile
+              </div>
+              <div class="analysis-content">
+                Trading volume 24% above 30-day average, indicating strong market participation and conviction.
+              </div>
+            </div>
+            <div class="analysis-item">
+              <div class="analysis-title">
+                <i data-lucide="shield-alert" style="width:14px;height:14px;color:var(--warning-default);"></i>
+                Resistance Level
+              </div>
+              <div class="analysis-content">
+                Approaching key resistance at $64,500. Watch for breakout or rejection at this level.
+              </div>
+            </div>
+          </div>
+          
+          <div class="ai-section">
+            <div class="ai-section-header">
+              <i data-lucide="activity" class="ai-section-icon"></i>
+              <span class="ai-section-title">Key Levels</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Support 1</span>
+              <span class="stat-value">$62,800</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Support 2</span>
+              <span class="stat-value">$61,500</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Resistance 1</span>
+              <span class="stat-value">$64,500</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Resistance 2</span>
+              <span class="stat-value">$66,200</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="shared-components.js"></script>
+  <script src="lightweight-charts.min.js"></script>
+  <script>
+    lucide.createIcons();
+    
+    // Initialize chart
+    const chartContainer = document.getElementById('voltChart');
+    if (chartContainer && typeof createStandardChart === 'function') {
+      const chart = createStandardChart('voltChart');
+      const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#10B981',
+        downColor: '#EF4444',
+        borderVisible: false,
+        wickUpColor: '#10B981',
+        wickDownColor: '#EF4444',
+      });
+      candlestickSeries.setData(generateSampleData(200));
+    }
+    
+    // Instrument selector
+    document.querySelectorAll('.instrument-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.instrument-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+    
+    // Timeframe selector
+    document.querySelectorAll('.tf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+    
+    // Indicator chips
+    document.querySelectorAll('.indicator-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('active');
+      });
+    });
+  </script>
+</body>
+</html>

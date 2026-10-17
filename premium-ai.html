@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Premium AI — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .premium-page { padding: var(--space-6); overflow-y: auto; height: 100%; background: var(--surface-primary); }
+    .premium-banner {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      margin-bottom: var(--space-6);
+    }
+    .premium-badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3); background: var(--state-warning-bg); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius-xl); font-size: var(--text-xs); font-weight: 600; color: var(--state-warning); margin-bottom: var(--space-3); }
+    .premium-banner h1 { font-size: var(--text-2xl); font-weight: 700; color: var(--text-primary); margin: 0 0 var(--space-2) 0; }
+    .premium-banner p { font-size: var(--text-sm); color: var(--text-secondary); margin: 0 0 var(--space-4) 0; max-width: 600px; line-height: 1.5; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6); }
+    .kpi-card { background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-5); position: relative; }
+    .kpi-card.locked .kpi-value { filter: blur(6px); user-select: none; }
+    .kpi-card.locked::after { content: ""; position: absolute; top: var(--space-4); right: var(--space-4); width: 16px; height: 16px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") no-repeat; opacity: 0.5; }
+    .kpi-label { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .kpi-value { font-size: var(--text-2xl); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-1); font-variant-numeric: tabular-nums; }
+    .kpi-change { font-size: var(--text-xs); font-weight: 500; }
+    .kpi-change.positive { color: var(--state-positive); }
+    .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-4); margin-bottom: var(--space-6); }
+    .panel { background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-5); }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); }
+    .panel-title { font-size: var(--text-md); font-weight: 600; color: var(--text-primary); margin: 0; }
+    .time-selector { display: flex; gap: 2px; background: var(--surface-secondary); padding: 2px; border-radius: var(--radius-md); }
+    .time-btn { padding: var(--space-1) var(--space-3); background: transparent; border: none; color: var(--text-secondary); font-size: var(--text-xs); font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; }
+    .time-btn.active { background: var(--accent-emerald); color: var(--text-inverse); }
+    .chart-area { height: 280px; background: var(--surface-secondary); border-radius: var(--radius-md); position: relative; overflow: hidden; }
+    .lock-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(11,17,32,0.9); }
+    .lock-overlay h3 { font-size: var(--text-md); color: var(--text-primary); margin: var(--space-3) 0 var(--space-1) 0; }
+    .lock-overlay p { font-size: var(--text-sm); color: var(--text-secondary); margin: 0 0 var(--space-4) 0; }
+    .insight-item { padding: var(--space-4); background: var(--surface-secondary); border-radius: var(--radius-md); margin-bottom: var(--space-3); }
+    .insight-item:last-child { margin-bottom: 0; }
+    .insight-header { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
+    .insight-icon { width: 28px; height: 28px; background: var(--accent-emerald-subtle); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--accent-emerald); }
+    .insight-title { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); }
+    .insight-text { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
+    .insight-item.locked { opacity: 0.5; filter: blur(3px); }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+    .feature-card { padding: var(--space-5); background: var(--surface-secondary); border-radius: var(--radius-lg); text-align: center; transition: all var(--transition-base); }
+    .feature-card:hover { background: var(--surface-elevated); transform: translateY(-2px); }
+    .feature-icon { width: 44px; height: 44px; background: var(--accent-emerald-subtle); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--accent-emerald); margin: 0 auto var(--space-3); }
+    .feature-title { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-2) 0; }
+    .feature-desc { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5; margin: 0; }
+    @media (max-width: 1200px) { .analytics-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar">
+      <div class="topbar-left"><button class="sidebar-toggle"><i data-lucide="menu"></i></button><img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/><span class="topbar-brand">Tradersbloc</span></div>
+      <div class="topbar-center"><span class="topbar-title">Premium AI</span></div>
+      <div class="topbar-right"><button class="btn btn-sm btn-primary" onclick="upgradeToPremium()">Upgrade — $49/mo</button><div class="user-menu"><button class="user-menu-trigger"><span class="user-avatar">T</span></button></div></div>
+    </header>
+    <aside class="sidebar"><nav class="sidebar-nav" id="sidebarNav"></nav></aside>
+    <main class="main-content">
+      <div class="premium-page">
+        <div class="premium-banner">
+          <div class="premium-badge"><i data-lucide="sparkles" style="width:14px;height:14px;"></i> Premium Analytics Suite</div>
+          <h1>AI-Powered Trading Intelligence</h1>
+          <p>Advanced analytics, predictive insights, and institutional-grade tools to maximize your trading performance.</p>
+          <button class="btn btn-primary" onclick="upgradeToPremium()">Upgrade to Premium — $49/mo</button>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Portfolio Value</div><div class="kpi-value" id="portfolioValue">$24,891</div><div class="kpi-change positive">+8.4% This Month</div></div>
+          <div class="kpi-card locked"><div class="kpi-label">AI Win Rate</div><div class="kpi-value">87.2%</div><div class="kpi-change positive">+2.1% vs Avg</div></div>
+          <div class="kpi-card locked"><div class="kpi-label">Sharpe Ratio</div><div class="kpi-value">2.84</div><div class="kpi-change positive">Above Target</div></div>
+          <div class="kpi-card locked"><div class="kpi-label">Max Drawdown</div><div class="kpi-value">-4.2%</div><div class="kpi-change positive">Better than 89% traders</div></div>
+        </div>
+        <div class="analytics-grid">
+          <div class="panel">
+            <div class="panel-header"><h2 class="panel-title">Performance Analytics</h2><div class="time-selector"><button class="time-btn">1D</button><button class="time-btn">1W</button><button class="time-btn active">1M</button><button class="time-btn">3M</button><button class="time-btn">1Y</button></div></div>
+            <div class="chart-area">
+              <svg viewBox="0 0 600 280" style="width:100%;height:100%;opacity:0.15;"><path d="M 0 240 Q 100 200 150 170 T 300 140 T 450 110 T 600 70" stroke="#10B981" stroke-width="3" fill="none"/></svg>
+              <div class="lock-overlay">
+                <div class="feature-icon" style="margin:0 auto 12px;"><i data-lucide="lock" style="width:20px;height:20px;"></i></div>
+                <h3>Premium Feature</h3><p>Advanced performance analytics with AI predictions</p>
+                <button class="btn btn-sm btn-primary" onclick="upgradeToPremium()">Unlock Now</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2 class="panel-title">AI Insights</h2></div>
+            <div class="insight-item">
+              <div class="insight-header"><div class="insight-icon"><i data-lucide="lightbulb" style="width:14px;height:14px;"></i></div><h3 class="insight-title">Market Opportunity</h3></div>
+              <p class="insight-text">BTC showing bullish divergence on 4H chart. AI predicts 78% probability of upward move.</p>
+            </div>
+            <div class="insight-item locked"><div class="insight-header"><div class="insight-icon"><i data-lucide="lock" style="width:14px;height:14px;"></i></div><h3 class="insight-title">Premium Insight</h3></div><p class="insight-text">Unlock premium for advanced AI predictions and signals.</p></div>
+            <div class="insight-item locked"><div class="insight-header"><div class="insight-icon"><i data-lucide="lock" style="width:14px;height:14px;"></i></div><h3 class="insight-title">Premium Insight</h3></div><p class="insight-text">Exclusive risk analysis available for premium members.</p></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom: var(--space-6)">
+          <div class="panel-header"><h2 class="panel-title">AI Risk Heatmap</h2><span style="font-size:var(--text-sm);color:var(--text-secondary)">Real-time market risk analysis</span></div>
+          <div class="chart-area" style="height:220px">
+            <div class="lock-overlay"><div class="feature-icon" style="margin:0 auto 12px;"><i data-lucide="lock" style="width:20px;height:20px;"></i></div><h3>Premium Risk Analytics</h3><p>AI-powered risk assessment across all your positions</p><button class="btn btn-sm btn-primary" onclick="upgradeToPremium()">Unlock Premium</button></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-title" style="margin-bottom:var(--space-4)">Premium Features</h2>
+          <div class="features-grid">
+            <div class="feature-card"><div class="feature-icon"><i data-lucide="brain" style="width:20px;height:20px;"></i></div><h3 class="feature-title">AI Predictions</h3><p class="feature-desc">Machine learning models predict market movements with 85%+ accuracy</p></div>
+            <div class="feature-card"><div class="feature-icon"><i data-lucide="bar-chart-2" style="width:20px;height:20px;"></i></div><h3 class="feature-title">Advanced Analytics</h3><p class="feature-desc">Sharpe ratio, alpha, beta, and 20+ institutional metrics</p></div>
+            <div class="feature-card"><div class="feature-icon"><i data-lucide="zap" style="width:20px;height:20px;"></i></div><h3 class="feature-title">Real-Time Signals</h3><p class="feature-desc">Instant notifications for high-confidence trade opportunities</p></div>
+            <div class="feature-card"><div class="feature-icon"><i data-lucide="target" style="width:20px;height:20px;"></i></div><h3 class="feature-title">Portfolio Optimizer</h3><p class="feature-desc">AI-driven asset allocation for optimal risk-adjusted returns</p></div>
+            <div class="feature-card"><div class="feature-icon"><i data-lucide="search" style="width:20px;height:20px;"></i></div><h3 class="feature-title">Market Scanner</h3><p class="feature-desc">Scan 500+ assets for patterns and setups in real-time</p></div>
+            <div class="feature-card"><div class="feature-icon"><i data-lucide="history" style="width:20px;height:20px;"></i></div><h3 class="feature-title">Backtesting Suite</h3><p class="feature-desc">Test strategies on 5+ years of historical data</p></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared-components.js"></script>
+  <script>
+    lucide.createIcons();
+    window.upgradeToPremium = function() { alert('Premium Upgrade\n\nFeatures:\n- AI-powered predictions\n- Advanced analytics\n- Real-time signals\n- Portfolio optimization\n- Priority support\n\nPrice: $49/month'); };
+    setInterval(() => {
+      const el = document.getElementById('portfolioValue');
+      if (!el) return;
+      const cv = parseFloat(el.textContent.replace('$','').replace(',',''));
+      const nv = cv + (Math.random() - 0.5) * 50;
+      el.textContent = '$' + nv.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }, 3000);
+  </script>
+</body>
+</html>

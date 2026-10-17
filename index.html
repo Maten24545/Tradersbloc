@@ -1,0 +1,252 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="alternate icon" href="favicon.ico"/>
+  <title>Tradersbloc — Trade & Win</title>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-sans); background: var(--surface-primary); color: var(--text-primary); overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-6); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); font-size: var(--text-md); font-weight: 600; cursor: pointer; border: none; transition: all var(--transition-fast); font-family: inherit; }
+    .btn-primary { background: var(--accent-emerald); color: var(--text-inverse); }
+    .btn-primary:hover { background: #059669; }
+    .btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary); }
+    .btn-outline:hover { border-color: var(--border-strong); }
+    .btn-lg { padding: var(--space-4) var(--space-8); font-size: var(--text-lg); }
+    .btn-xl { padding: var(--space-4) var(--space-10); font-size: var(--text-lg); }
+
+    /* Navbar */
+    .navbar { position: sticky; top: 0; z-index: 100; background: var(--surface-elevated); border-bottom: 1px solid var(--border-subtle); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-6); max-width: 1200px; margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: var(--space-2); }
+    .logo img { width: 28px; height: 28px; }
+    .logo span { font-size: var(--text-xl); font-weight: 700; color: var(--text-primary); }
+    .nav-links { display: flex; gap: var(--space-6); }
+    .nav-links a { font-size: var(--text-sm); font-weight: 500; color: var(--text-secondary); transition: color var(--transition-fast); }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-cta { display: flex; gap: var(--space-3); }
+    .hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; }
+    .hamburger span { width: 24px; height: 2px; background: var(--text-primary); border-radius: 1px; }
+    .mobile-menu { display: none; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-6); background: var(--surface-elevated); border-bottom: 1px solid var(--border-subtle); }
+    @media (max-width: 768px) { .nav-links, .nav-cta { display: none; } .hamburger { display: flex; } .mobile-menu.active { display: flex; } }
+
+    /* Hero */
+    .hero { padding: var(--space-16) 0 var(--space-12); text-align: center; position: relative; }
+    .hero-badge { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-4); background: var(--accent-emerald-subtle); border: 1px solid rgba(16,185,129,0.3); border-radius: var(--radius-xl); font-size: var(--text-sm); font-weight: 500; color: var(--accent-emerald); margin-bottom: var(--space-5); }
+    .hero-title { font-size: 48px; font-weight: 800; color: var(--text-primary); margin-bottom: var(--space-4); line-height: 1.1; }
+    .hero-title .accent { color: var(--accent-emerald); }
+    .hero-sub { font-size: var(--text-lg); color: var(--text-secondary); max-width: 600px; margin: 0 auto var(--space-8); line-height: 1.5; }
+    .hero-actions { display: flex; gap: var(--space-4); justify-content: center; margin-bottom: var(--space-10); flex-wrap: wrap; }
+    .hero-stats { display: flex; align-items: center; justify-content: center; gap: var(--space-6); flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-value { display: block; font-size: var(--text-2xl); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .stat-label { font-size: var(--text-xs); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-divider { width: 1px; height: 40px; background: var(--border-default); }
+
+    /* Ticker */
+    .ticker { background: var(--surface-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); overflow: hidden; }
+    .ticker-track { display: flex; gap: var(--space-6); padding: var(--space-2) 0; white-space: nowrap; animation: scroll 40s linear infinite; }
+    @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .ticker-item { font-size: var(--text-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .ticker-item.up { color: var(--state-positive); }
+    .ticker-item.down { color: var(--state-negative); }
+
+    /* Sections */
+    .section { padding: var(--space-16) 0; }
+    .section-dark { background: var(--surface-elevated); }
+    .section-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-emerald); margin-bottom: var(--space-3); }
+    .section-title { font-size: var(--text-3xl); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-2); }
+    .section-sub { font-size: var(--text-md); color: var(--text-secondary); margin-bottom: var(--space-10); }
+    .text-center { text-align: center; }
+
+    /* Features */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); }
+    .feature-card { background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-xl); padding: var(--space-6); transition: all var(--transition-base); }
+    .feature-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    .feature-icon { width: 44px; height: 44px; background: var(--accent-emerald-subtle); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--accent-emerald); margin-bottom: var(--space-4); }
+    .feature-card h3 { font-size: var(--text-md); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2); }
+    .feature-card p { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
+
+    /* Tool cards (links) */
+    .tool-card { display: block; background: var(--surface-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-5); transition: all var(--transition-base); }
+    .tool-card:hover { border-color: var(--accent-emerald); transform: translateY(-2px); }
+    .tool-card .feature-icon { width: 36px; height: 36px; margin-bottom: var(--space-3); }
+    .tool-card h3 { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1); }
+    .tool-card p { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.5; }
+
+    /* Steps */
+    .steps { display: flex; align-items: center; justify-content: center; gap: var(--space-4); flex-wrap: wrap; }
+    .step { text-align: center; max-width: 260px; }
+    .step-number { font-size: var(--text-xs); font-weight: 700; color: var(--accent-emerald); margin-bottom: var(--space-2); }
+    .step-icon { width: 56px; height: 56px; background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--accent-emerald); margin: 0 auto var(--space-4); }
+    .step h3 { font-size: var(--text-md); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2); }
+    .step p { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
+    .step-connector { flex: 0 0 40px; height: 1px; background: var(--border-default); }
+
+    /* Assets */
+    .assets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3); }
+    .asset-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); transition: all var(--transition-fast); }
+    .asset-row:hover { border-color: var(--border-strong); }
+    .asset-symbol { width: 36px; height: 36px; background: var(--surface-secondary); border: 1px solid var(--border-default); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--text-xs); font-weight: 700; color: var(--accent-emerald); }
+    .asset-name { flex: 1; font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); }
+    .asset-ret { font-size: var(--text-sm); font-weight: 600; color: var(--state-positive); font-variant-numeric: tabular-nums; }
+
+    /* CTA */
+    .cta { padding: var(--space-16) 0; text-align: center; background: var(--surface-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .cta h2 { font-size: var(--text-3xl); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-3); }
+    .cta p { font-size: var(--text-md); color: var(--text-secondary); margin-bottom: var(--space-6); }
+
+    /* Footer */
+    .footer { padding: var(--space-12) 0 var(--space-6); }
+    .footer-inner { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-8); }
+    .footer-brand p { font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-3); }
+    .footer-col h4 { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-3); }
+    .footer-col a { display: block; font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-2); transition: color var(--transition-fast); }
+    .footer-col a:hover { color: var(--text-primary); }
+    .footer-bottom { padding-top: var(--space-5); border-top: 1px solid var(--border-subtle); }
+    .footer-bottom p { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-2); }
+    .disclaimer { max-width: 800px; line-height: 1.5; }
+    @media (max-width: 768px) { .footer-inner { grid-template-columns: 1fr 1fr; } .hero-title { font-size: 36px; } .stat-divider { display: none; } .step-connector { display: none; } }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo"><img src="logo.svg" alt="Tradersbloc"/><span>Tradersbloc</span></a>
+      <nav class="nav-links"><a href="#features">Features</a><a href="#trading-tools">Trading Tools</a><a href="#how">How It Works</a><a href="#assets">Assets</a></nav>
+      <div class="nav-cta"><a href="login.html" class="btn btn-outline">Log In</a><a href="register.html" class="btn btn-primary">Start Trading</a></div>
+      <button class="hamburger" id="hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('active')"><span></span><span></span><span></span></button>
+    </div>
+    <div class="mobile-menu" id="mobile-menu"><a href="#features">Features</a><a href="#trading-tools">Trading Tools</a><a href="#how">How It Works</a><a href="#assets">Assets</a><a href="login.html">Log In</a><a href="register.html" class="btn btn-primary" style="margin-top:.5rem">Start Trading</a></div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge"><i data-lucide="trophy" style="width:14px;height:14px"></i> Join 50,000+ winning traders</div>
+      <h1 class="hero-title">Trade Smart.<br/><span class="accent">Win More.</span></h1>
+      <p class="hero-sub">Binary options trading made simple. Choose an asset, pick a direction, and watch your profits grow — starting with just $5.</p>
+      <div class="hero-actions"><a href="register.html" class="btn btn-primary btn-lg">Create Free Account</a><a href="platform.html" class="btn btn-outline btn-lg">Try Demo</a></div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-value">$2.4M+</span><span class="stat-label">Paid Out</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-value">50,000+</span><span class="stat-label">Active Traders</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-value">95%</span><span class="stat-label">Win Rate</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-value">$5</span><span class="stat-label">Min. Deposit</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker">
+    <div class="ticker-track">
+      <span class="ticker-item up">EURUSD +0.42%</span><span class="ticker-item down">GBPUSD -0.18%</span><span class="ticker-item up">US500 +1.03%</span><span class="ticker-item up">GOLD +0.76%</span><span class="ticker-item up">US100 +1.51%</span><span class="ticker-item up">BTCUSD +2.34%</span><span class="ticker-item down">WTI -0.55%</span><span class="ticker-item up">USDJPY +0.29%</span>
+      <span class="ticker-item up">EURUSD +0.42%</span><span class="ticker-item down">GBPUSD -0.18%</span><span class="ticker-item up">US500 +1.03%</span><span class="ticker-item up">GOLD +0.76%</span><span class="ticker-item up">US100 +1.51%</span><span class="ticker-item up">BTCUSD +2.34%</span><span class="ticker-item down">WTI -0.55%</span><span class="ticker-item up">USDJPY +0.29%</span>
+    </div>
+  </div>
+
+  <section class="section" id="features">
+    <div class="container text-center">
+      <div class="section-label">Why Tradersbloc</div>
+      <h2 class="section-title">Everything You Need to Trade</h2>
+      <p class="section-sub">Powerful tools, real-time data, and instant payouts — all in one place.</p>
+      <div class="features-grid">
+        <div class="feature-card"><div class="feature-icon"><i data-lucide="zap" style="width:20px;height:20px;"></i></div><h3>Instant Payouts</h3><p>Withdraw your winnings anytime. Funds processed within 24 hours directly to your account.</p></div>
+        <div class="feature-card"><div class="feature-icon"><i data-lucide="line-chart" style="width:20px;height:20px;"></i></div><h3>Live Charts</h3><p>Real-time price charts with multiple timeframes and technical indicators to guide your trades.</p></div>
+        <div class="feature-card"><div class="feature-icon"><i data-lucide="target" style="width:20px;height:20px;"></i></div><h3>High Returns</h3><p>Earn up to 85% profit on every successful trade. Simple binary options with clear outcomes.</p></div>
+        <div class="feature-card"><div class="feature-icon"><i data-lucide="shield" style="width:20px;height:20px;"></i></div><h3>Safe & Secure</h3><p>Your funds are protected with bank-level encryption. Deposit and withdraw with confidence.</p></div>
+        <div class="feature-card"><div class="feature-icon"><i data-lucide="dollar-sign" style="width:20px;height:20px;"></i></div><h3>Start with $5</h3><p>Low barrier to entry. Deposit as little as $5 and start trading real assets immediately.</p></div>
+        <div class="feature-card"><div class="feature-icon"><i data-lucide="smartphone" style="width:20px;height:20px;"></i></div><h3>Any Device</h3><p>Trade from desktop or mobile. Our responsive platform works perfectly on all screen sizes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark" id="trading-tools">
+    <div class="container text-center">
+      <div class="section-label">Professional Tools</div>
+      <h2 class="section-title">11 Powerful Trading Workspaces</h2>
+      <p class="section-sub">From AI-powered bots to professional terminals — everything you need to trade like a pro.</p>
+      <div class="features-grid" style="margin-top: 3rem;">
+        <a href="bot-builder-new.html" class="tool-card"><div class="feature-icon"><i data-lucide="bot" style="width:18px;height:18px;"></i></div><h3>Bot Builder</h3><p>Visual node-based bot designer. Drag, drop, and create custom trading strategies with zero coding.</p></a>
+        <a href="volt-ai.html" class="tool-card"><div class="feature-icon"><i data-lucide="zap" style="width:18px;height:18px;"></i></div><h3>Volt AI</h3><p>Live chart workspace powered by AI. Real-time signals, market analysis, and TradingView integration.</p></a>
+        <a href="auto-ai.html" class="tool-card"><div class="feature-icon"><i data-lucide="brain" style="width:18px;height:18px;"></i></div><h3>Auto AI</h3><p>Fully automated trading control center. Activate bots, monitor performance, track profits.</p></a>
+        <a href="signal-ai.html" class="tool-card"><div class="feature-icon"><i data-lucide="activity" style="width:18px;height:18px;"></i></div><h3>Signal AI</h3><p>Real-time AI trading signals with confidence scores. Execute trades instantly with one click.</p></a>
+        <a href="quick-bot.html" class="tool-card"><div class="feature-icon"><i data-lucide="clock" style="width:18px;height:18px;"></i></div><h3>Quick Bot</h3><p>Create a trading bot in 60 seconds. Simple 4-step wizard for beginners and experts alike.</p></a>
+        <a href="premium-ai.html" class="tool-card"><div class="feature-icon"><i data-lucide="sparkles" style="width:18px;height:18px;"></i></div><h3>Premium AI</h3><p>Advanced analytics workspace. AI predictions, risk heatmaps, and institutional-grade metrics.</p></a>
+        <a href="free-bots.html" class="tool-card"><div class="feature-icon"><i data-lucide="cpu" style="width:18px;height:18px;"></i></div><h3>Free Bots</h3><p>9 battle-tested trading bots ready to install. From scalping to swing trading strategies.</p></a>
+        <a href="apex-trader.html" class="tool-card"><div class="feature-icon"><i data-lucide="flame" style="width:18px;height:18px;"></i></div><h3>Apex Trader</h3><p>Professional multi-panel terminal. Live charts, order entry, positions tracking, and more.</p></a>
+        <a href="copy-trader.html" class="tool-card"><div class="feature-icon"><i data-lucide="copy" style="width:18px;height:18px;"></i></div><h3>Copy Trader</h3><p>Social trading platform. Automatically copy successful traders and diversify your portfolio.</p></a>
+        <a href="bulk-trader.html" class="tool-card"><div class="feature-icon"><i data-lucide="layers" style="width:18px;height:18px;"></i></div><h3>Bulk Trader</h3><p>Multi-order table editor. Create, edit, and execute hundreds of orders simultaneously.</p></a>
+        <a href="speed-bot.html" class="tool-card"><div class="feature-icon"><i data-lucide="gauge" style="width:18px;height:18px;"></i></div><h3>Speed Bot</h3><p>Real-time performance monitoring. Track latency, errors, bot health, and system status.</p></a>
+        <a href="platform.html" class="tool-card" style="border-style: dashed;"><div class="feature-icon"><i data-lucide="layout-grid" style="width:18px;height:18px;"></i></div><h3>Trading Terminal</h3><p>Main trading terminal with charts, trade execution, and real-time market data.</p></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="container text-center">
+      <div class="section-label">Process</div>
+      <h2 class="section-title">Start Trading in 3 Steps</h2>
+      <p class="section-sub">Get started in minutes. No experience required.</p>
+      <div class="steps">
+        <div class="step"><div class="step-number">01</div><div class="step-icon"><i data-lucide="user-plus" style="width:24px;height:24px;"></i></div><h3>Create Account</h3><p>Sign up free in under 60 seconds. No credit card required to register.</p></div>
+        <div class="step-connector"></div>
+        <div class="step"><div class="step-number">02</div><div class="step-icon"><i data-lucide="credit-card" style="width:24px;height:24px;"></i></div><h3>Deposit Funds</h3><p>Fund your account with a minimum of just $5 via card, crypto, or bank transfer.</p></div>
+        <div class="step-connector"></div>
+        <div class="step"><div class="step-number">03</div><div class="step-icon"><i data-lucide="trending-up" style="width:24px;height:24px;"></i></div><h3>Trade & Withdraw</h3><p>Pick an asset, choose BUY or SELL, set your amount and timer — then collect your profits.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark" id="assets">
+    <div class="container text-center">
+      <div class="section-label">Assets</div>
+      <h2 class="section-title">Trade 50+ Assets</h2>
+      <p class="section-sub">Forex, stocks, crypto, commodities and indices — all in one platform.</p>
+      <div class="assets-grid">
+        <div class="asset-row"><span class="asset-symbol">EU</span><span class="asset-name">EUR/USD</span><span class="asset-ret">+82%</span></div>
+        <div class="asset-row"><span class="asset-symbol">BTC</span><span class="asset-name">BTC/USD</span><span class="asset-ret">+85%</span></div>
+        <div class="asset-row"><span class="asset-symbol">XAU</span><span class="asset-name">GOLD</span><span class="asset-ret">+80%</span></div>
+        <div class="asset-row"><span class="asset-symbol">SP</span><span class="asset-name">US500</span><span class="asset-ret">+78%</span></div>
+        <div class="asset-row"><span class="asset-symbol">GB</span><span class="asset-name">GBP/USD</span><span class="asset-ret">+82%</span></div>
+        <div class="asset-row"><span class="asset-symbol">ETH</span><span class="asset-name">ETH/USD</span><span class="asset-ret">+85%</span></div>
+        <div class="asset-row"><span class="asset-symbol">WTI</span><span class="asset-name">OIL/WTI</span><span class="asset-ret">+75%</span></div>
+        <div class="asset-row"><span class="asset-symbol">AP</span><span class="asset-name">APPLE</span><span class="asset-ret">+76%</span></div>
+      </div>
+      <a href="register.html" class="btn btn-primary btn-lg" style="margin-top:2.5rem">Trade All Assets</a>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2>Ready to Start Winning?</h2>
+      <p>Join thousands of traders making daily profits. Create your free account now.</p>
+      <a href="register.html" class="btn btn-primary btn-xl">Get Started Free</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand"><a href="index.html" class="logo"><img src="logo.svg" alt="Tradersbloc"/><span>Tradersbloc</span></a><p>Simple, professional binary options trading for everyone.</p></div>
+        <div class="footer-col"><h4>Platform</h4><a href="platform.html">Trade Now</a><a href="index.html#trading-tools">Trading Tools</a><a href="register.html">Sign Up</a><a href="login.html">Log In</a></div>
+        <div class="footer-col"><h4>Support</h4><a href="mailto:support@tradersbloc.com">Help Centre</a><a href="mailto:support@tradersbloc.com">Live Chat</a><a href="#faq">FAQ</a></div>
+        <div class="footer-col"><h4>Legal</h4><a href="terms.html">Terms of Service</a><a href="privacy.html">Privacy Policy</a><a href="terms.html#risk-disclosure">Risk Disclosure</a></div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 Tradersbloc. All rights reserved.</p>
+        <p class="disclaimer">Risk Disclaimer: Trading involves risk. Only trade with funds you can afford to lose. Past performance is not indicative of future results. This platform is for entertainment purposes.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

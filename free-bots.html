@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Free Bots — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .bots-page { padding: var(--space-6); overflow-y: auto; height: 100%; background: var(--surface-primary); }
+    .page-title { font-size: var(--text-xl); font-weight: 700; color: var(--text-primary); margin: 0 0 var(--space-2) 0; }
+    .page-subtitle { font-size: var(--text-sm); color: var(--text-secondary); margin: 0 0 var(--space-6) 0; }
+    .filter-bar { display: flex; gap: var(--space-4); align-items: center; margin-bottom: var(--space-6); flex-wrap: wrap; }
+    .search-box { flex: 1; max-width: 360px; position: relative; }
+    .search-box input { width: 100%; padding: var(--space-3) var(--space-4) var(--space-3) 40px; background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-primary); font-size: var(--text-sm); }
+    .search-box input:focus { outline: none; border-color: var(--accent-emerald); }
+    .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); }
+    .filter-chips { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+    .filter-chip { padding: var(--space-2) var(--space-4); background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-xl); color: var(--text-secondary); font-size: var(--text-sm); font-weight: 500; cursor: pointer; transition: all var(--transition-fast); }
+    .filter-chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
+    .filter-chip.active { background: var(--accent-emerald); border-color: var(--accent-emerald); color: var(--text-inverse); }
+    .bots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
+    .bot-card { background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-5); transition: all var(--transition-base); }
+    .bot-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    .bot-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-4); }
+    .bot-icon { width: 44px; height: 44px; background: var(--surface-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--accent-emerald); }
+    .bot-badges { display: flex; gap: var(--space-1); }
+    .badge { padding: 3px 8px; border-radius: var(--radius-sm); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge.free { background: var(--state-positive-bg); color: var(--state-positive); }
+    .badge.popular { background: var(--state-warning-bg); color: var(--state-warning); }
+    .badge.new { background: var(--accent-blue-subtle); color: var(--accent-blue); }
+    .bot-title { font-size: var(--text-md); font-weight: 600; color: var(--text-primary); margin: 0 0 var(--space-2) 0; }
+    .bot-desc { font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4); line-height: 1.5; }
+    .bot-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-bottom: var(--space-4); padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .bot-stat { text-align: center; }
+    .bot-stat-label { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .bot-stat-value { font-size: var(--text-md); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .bot-stat-value.positive { color: var(--state-positive); }
+    .bot-footer { display: flex; gap: var(--space-2); }
+    .users-count { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--text-tertiary); margin-top: var(--space-3); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar">
+      <div class="topbar-left"><button class="sidebar-toggle"><i data-lucide="menu"></i></button><img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/><span class="topbar-brand">Tradersbloc</span></div>
+      <div class="topbar-center"><span class="topbar-title">Free Bots</span></div>
+      <div class="topbar-right"><div class="user-menu"><button class="user-menu-trigger"><span class="user-avatar">T</span></button></div></div>
+    </header>
+    <aside class="sidebar"><nav class="sidebar-nav" id="sidebarNav"></nav></aside>
+    <main class="main-content">
+      <div class="bots-page">
+        <h1 class="page-title">Free Trading Bots</h1>
+        <p class="page-subtitle">Battle-tested automated strategies ready to deploy at zero cost</p>
+        <div class="filter-bar">
+          <div class="search-box"><i data-lucide="search" style="width:16px;height:16px;"></i><input type="text" placeholder="Search bots..." id="searchInput"></div>
+          <div class="filter-chips">
+            <div class="filter-chip active" data-filter="all">All Bots</div>
+            <div class="filter-chip" data-filter="popular">Popular</div>
+            <div class="filter-chip" data-filter="new">New</div>
+            <div class="filter-chip" data-filter="high-win">High Win Rate</div>
+          </div>
+        </div>
+        <div class="bots-grid" id="botsGrid"></div>
+      </div>
+    </main>
+  </div>
+  <script src="shared-components.js"></script>
+  <script>
+    lucide.createIcons();
+    const bots = [
+      { id: 1, name: "Grid Master", description: "Automated grid trading that profits from market volatility. Works in ranging markets.", icon: "grid-3x3", badges: ["free", "popular"], winRate: "68%", avgReturn: "+12.4%", users: "2.4K", totalUsers: 2400 },
+      { id: 2, name: "MA Crossover", description: "Classic moving average crossover strategy. Identifies trend reversals with precision.", icon: "trending-up", badges: ["free"], winRate: "62%", avgReturn: "+8.7%", users: "1.8K", totalUsers: 1800 },
+      { id: 3, name: "RSI Bounce", description: "Buy oversold, sell overbought. Simple but effective RSI-based mean reversion.", icon: "activity", badges: ["free", "new"], winRate: "71%", avgReturn: "+15.2%", users: "980", totalUsers: 980 },
+      { id: 4, name: "Breakout Hunter", description: "Detects support/resistance breaks and enters momentum trades with tight stops.", icon: "zap", badges: ["free", "popular"], winRate: "64%", avgReturn: "+10.9%", users: "3.1K", totalUsers: 3100 },
+      { id: 5, name: "Scalper Pro", description: "High-frequency scalping bot targeting small profits on 1-minute timeframes.", icon: "timer", badges: ["free"], winRate: "58%", avgReturn: "+6.3%", users: "1.5K", totalUsers: 1500 },
+      { id: 6, name: "VWAP Trader", description: "Volume-weighted average price strategy. Institutional-grade execution logic.", icon: "bar-chart-2", badges: ["free", "new"], winRate: "66%", avgReturn: "+11.8%", users: "720", totalUsers: 720 },
+      { id: 7, name: "Bollinger Bands", description: "Statistical volatility bands for entry/exit signals. Works across all timeframes.", icon: "area-chart", badges: ["free"], winRate: "60%", avgReturn: "+9.1%", users: "2.0K", totalUsers: 2000 },
+      { id: 8, name: "Arbitrage Scout", description: "Cross-exchange price difference exploitation. Low-risk systematic profit.", icon: "repeat", badges: ["free", "popular"], winRate: "74%", avgReturn: "+13.6%", users: "1.2K", totalUsers: 1200 },
+      { id: 9, name: "Trend Follower", description: "Rides strong trends using multi-timeframe confirmation. Minimizes whipsaw losses.", icon: "rocket", badges: ["free"], winRate: "63%", avgReturn: "+14.3%", users: "1.9K", totalUsers: 1900 }
+    ];
+    function renderBots(list = bots) {
+      document.getElementById('botsGrid').innerHTML = list.map(bot => `
+        <div class="bot-card">
+          <div class="bot-card-header">
+            <div class="bot-icon"><i data-lucide="${bot.icon}" style="width:20px;height:20px;"></i></div>
+            <div class="bot-badges">${bot.badges.map(b => `<span class="badge ${b}">${b}</span>`).join('')}</div>
+          </div>
+          <h3 class="bot-title">${bot.name}</h3>
+          <p class="bot-desc">${bot.description}</p>
+          <div class="bot-stats">
+            <div class="bot-stat"><div class="bot-stat-label">Win Rate</div><div class="bot-stat-value positive">${bot.winRate}</div></div>
+            <div class="bot-stat"><div class="bot-stat-label">Avg Return</div><div class="bot-stat-value positive">${bot.avgReturn}</div></div>
+            <div class="bot-stat"><div class="bot-stat-label">Active</div><div class="bot-stat-value">${bot.users}</div></div>
+          </div>
+          <div class="bot-footer">
+            <button class="btn btn-sm btn-primary" style="flex:1" onclick="installBot(${bot.id})">Install Free</button>
+            <button class="btn btn-sm btn-secondary" style="flex:1" onclick="viewDetails(${bot.id})">Details</button>
+          </div>
+          <div class="users-count"><i data-lucide="users" style="width:12px;height:12px;"></i> ${bot.totalUsers.toLocaleString()} traders using this bot</div>
+        </div>`).join('');
+      lucide.createIcons();
+    }
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const f = chip.dataset.filter;
+        let filtered = bots;
+        if (f === 'popular') filtered = bots.filter(b => b.badges.includes('popular'));
+        else if (f === 'new') filtered = bots.filter(b => b.badges.includes('new'));
+        else if (f === 'high-win') filtered = bots.filter(b => parseInt(b.winRate) >= 65);
+        renderBots(filtered);
+      });
+    });
+    document.getElementById('searchInput').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      renderBots(bots.filter(b => b.name.toLowerCase().includes(q) || b.description.toLowerCase().includes(q)));
+    });
+    window.installBot = function(id) { const b = bots.find(b => b.id === id); alert(`Installing ${b.name}...`); };
+    window.viewDetails = function(id) { const b = bots.find(b => b.id === id); alert(`${b.name}\n\n${b.description}\n\nWin Rate: ${b.winRate}\nAvg Return: ${b.avgReturn}\nActive Users: ${b.users}`); };
+    renderBots();
+  </script>
+</body>
+</html>

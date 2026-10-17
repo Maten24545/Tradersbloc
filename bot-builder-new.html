@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bot Builder — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Bot Builder Specific Styles */
+    .bot-builder-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr 280px;
+      grid-template-rows: 1fr 200px;
+      gap: 0;
+      height: 100%;
+      position: relative;
+    }
+    
+    /* View Mode Toggle */
+    .view-toggle {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .view-toggle-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-base);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .view-toggle-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+    }
+    
+    .view-toggle-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    /* Code Editor View */
+    .code-editor-view {
+      display: none;
+      grid-column: 2;
+      grid-row: 1;
+      flex-direction: column;
+      background: var(--bg-app);
+    }
+    
+    .code-editor-view.active {
+      display: flex;
+    }
+    
+    .code-editor-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .code-editor-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    
+    .code-editor-toolbar-right {
+      display: flex;
+      gap: var(--space-2);
+    }
+    
+    .language-selector {
+      padding: 6px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    
+    .code-editor-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .code-editor {
+      width: 100%;
+      height: 100%;
+      padding: var(--space-4);
+      background: #0D1117;
+      color: #E6EDF3;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      border: none;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+    }
+    
+    .code-editor::selection {
+      background: rgba(35, 123, 255, 0.3);
+    }
+    
+    /* Syntax highlighting placeholder styles */
+    .code-editor-highlighted {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: var(--space-4);
+      pointer-events: none;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: transparent;
+    }
+    
+    /* Canvas view - hide when code view active */
+    .canvas-area.hidden {
+      display: none;
+    }
+    
+    /* Split view support (future) */
+    @media (min-width: 1920px) {
+      .bot-builder-layout.split-view {
+        grid-template-columns: var(--sidebar-width) 1fr 1fr 280px;
+      }
+      
+      .bot-builder-layout.split-view .canvas-area,
+      .bot-builder-layout.split-view .code-editor-view {
+        display: block !important;
+      }
+      
+      .bot-builder-layout.split-view .canvas-area {
+        grid-column: 2;
+      }
+      
+      .bot-builder-layout.split-view .code-editor-view {
+        grid-column: 3;
+      }
+      
+      .bot-builder-layout.split-view .properties-panel {
+        grid-column: 4;
+      }
+    }
+    
+    .component-library {
+      grid-row: 1 / 3;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: var(--space-4);
+    }
+    
+    .canvas-area {
+      grid-column: 2;
+      grid-row: 1;
+      background: var(--bg-app);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .canvas-area.drag-over {
+      background: rgba(35, 123, 255, 0.05);
+      box-shadow: inset 0 0 0 2px rgba(35, 123, 255, 0.3);
+    }
+    
+    .properties-panel {
+      grid-column: 3;
+      grid-row: 1;
+      background: var(--bg-elevated);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: var(--space-4);
+    }
+    
+    .console-panel {
+      grid-column: 2 / 4;
+      grid-row: 2;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border);
+      overflow-y: auto;
+    }
+    
+    /* Component Categories */
+    .component-category {
+      margin-bottom: var(--space-6);
+    }
+    
+    .category-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-3);
+    }
+    
+    .component-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-2);
+      cursor: grab;
+      transition: all var(--transition-base);
+      font-size: 13px;
+      user-select: none;
+    }
+    
+    .component-item:active {
+      cursor: grabbing;
+      transform: scale(0.98);
+    }
+    
+    .component-item:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+      transform: translateX(4px);
+    }
+    
+    .component-item i {
+      width: 16px;
+      height: 16px;
+      color: var(--primary);
+    }
+    
+    /* Canvas */
+    .canvas-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(var(--border-subtle) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    
+    .canvas-nodes {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: var(--space-6);
+    }
+    
+    /* Node Styles */
+    .flow-node {
+      position: absolute;
+      width: 200px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      cursor: move;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+    
+    .flow-node:hover {
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-hover);
+    }
+    
+    .flow-node.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-subtle), var(--shadow-lg);
+      z-index: 100;
+    }
+    
+    .flow-node.dragging {
+      opacity: 0.8;
+      cursor: grabbing;
+      z-index: 1000;
+    }
+    
+    .node-header {
+      padding: var(--space-3);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    
+    .node-icon {
+      width: 18px;
+      height: 18px;
+      color: var(--primary);
+    }
+    
+    .node-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    
+    .node-delete {
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: var(--space-1);
+      border-radius: var(--radius-sm);
+      display: flex;
+    }
+    
+    .node-delete:hover {
+      background: var(--negative-bg);
+      color: var(--negative);
+    }
+    
+    .node-body {
+      padding: var(--space-3);
+    }
+    
+    .node-field {
+      margin-bottom: var(--space-3);
+    }
+    
+    .node-field:last-child {
+      margin-bottom: 0;
+    }
+    
+    .node-field label {
+      font-size: 11px;
+      margin-bottom: var(--space-1);
+    }
+    
+    .node-field input, .node-field select {
+      padding: var(--space-1) var(--space-2);
+      font-size: 12px;
+    }
+    
+    /* Connection Points */
+    .node-port {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: var(--bg-app);
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      cursor: crosshair;
+    }
+    
+    .node-port.input {
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .node-port.output {
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .node-port:hover {
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+    }
+    
+    /* Connections (SVG) */
+    .connections-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .connection-path {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 2;
+      opacity: 0.6;
+    }
+    
+    .connection-path.active {
+      stroke: var(--primary-hover);
+      opacity: 1;
+      filter: drop-shadow(0 0 4px var(--primary));
+    }
+    
+    /* Console */
+    .console-header {
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .console-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    
+    .console-content {
+      padding: var(--space-4);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    
+    .console-log {
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-2);
+    }
+    
+    .console-time {
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+    
+    .console-log.success { color: var(--positive); }
+    .console-log.error { color: var(--negative); }
+    .console-log.warning { color: var(--warning); }
+    
+    @media (max-width: 1280px) {
+      .bot-builder-layout {
+        grid-template-columns: 280px 1fr 240px;
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      .bot-builder-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+      }
+      
+      .component-library,
+      .properties-panel {
+        grid-column: 1;
+        grid-row: auto;
+        max-height: 300px;
+      }
+      
+      .canvas-area {
+        grid-column: 1;
+        min-height: 400px;
+      }
+      
+      .console-panel {
+        grid-column: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" aria-label="Toggle sidebar"><i data-lucide="menu"></i></button>
+        <img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/>
+        <span class="topbar-brand">Tradersbloc</span>
+      </div>
+      <div class="topbar-center"><span class="topbar-title">Bot Builder</span></div>
+      <div class="topbar-right">
+        <button class="btn btn-sm btn-secondary" onclick="testStrategy()"><i data-lucide="play" style="width:14px;height:14px;"></i> Test Strategy</button>
+        <button class="btn btn-sm btn-primary" onclick="saveStrategy()" title="Ctrl+S"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Strategy</button>
+        <div class="user-menu"><button class="user-menu-trigger"><span class="user-avatar">T</span></button></div>
+      </div>
+    </header>
+    <aside class="sidebar"><nav class="sidebar-nav" id="sidebarNav"></nav></aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Bot Builder Layout -->
+      <div class="bot-builder-layout">
+        <!-- View Mode Toggle -->
+        <div class="view-toggle">
+          <button class="view-toggle-btn active" data-view="visual" onclick="switchView('visual')">
+            <i data-lucide="grid-3x3"></i>
+            Visual
+          </button>
+          <button class="view-toggle-btn" data-view="code" onclick="switchView('code')">
+            <i data-lucide="code-2"></i>
+            Code
+          </button>
+          <button class="view-toggle-btn" data-view="split" onclick="switchView('split')">
+            <i data-lucide="panel-left"></i>
+            Split
+          </button>
+        </div>
+        
+        <!-- Component Library -->
+        <div class="component-library">
+          <div class="component-category">
+            <div class="category-title">Entry Conditions</div>
+            <div class="component-item" draggable="true" data-node-type="entry">
+              <i data-lucide="play-circle"></i>
+              <span>Start</span>
+            </div>
+            <div class="component-item" draggable="true" data-node-type="price-above">
+              <i data-lucide="trending-up"></i>
+              <span>Price Above</span>
+            </div>
+            <div class="component-item" draggable="true" data-node-type="price-below">
+              <i data-lucide="trending-down"></i>
+              <span>Price Below</span>
+            </div>
+            <div class="component-item" draggable="true" data-node-type="crossover">
+              <i data-lucide="arrow-up-right"></i>
+              <span>MA Crossover</span>
+            </div>
+          </div>
+          
+          <div class="component-category">
+            <div class="category-title">Indicators</div>
+            <div class="component-item" draggable="true" data-node-type="rsi">
+              <i data-lucide="activity"></i>
+              <span>RSI</span>
+            </div>
+            <div class="component-item" draggable="true" data-node-type="macd">
+              <i data-lucide="bar-chart-2"></i>
+              <span>MACD</span>
+            </div>
+            <div class="component-item" draggable="true" data-node-type="bollinger">
+              <i data-lucide="area-chart"></i>
+              <span>Bollinger Bands</span>
+            </div>
+          </div>
+          
+          <div class="component-category">
+            <div class="category-title">Actions</div>
+            <div class="component-item" draggable="true" data-node-type="buy">
+              <i data-lucide="arrow-up"></i>
+              <span>Buy</span>
+            </div>
+            <div class="component-item" draggable="true" data-node-type="sell">
+              <i data-lucide="arrow-down"></i>
+              <span>Sell</span>
+            </div>
+            <div class="component-item" draggable="true" data-node-type="stop-loss">
+              <i data-lucide="shield-off"></i>
+              <span>Stop Loss</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Canvas Area (Visual Mode) -->
+        <div class="canvas-area" id="canvasArea">
+          <div class="canvas-grid"></div>
+          <svg class="connections-svg" id="connectionsSvg"></svg>
+          <div class="canvas-nodes" id="canvasNodes">
+            <!-- Empty state (will be hidden when nodes are added) -->
+            <div id="canvasEmptyState" style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;
+              pointer-events: none;
+              user-select: none;
+            ">
+              <i data-lucide="mouse-pointer-2" style="
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 16px;
+                display: block;
+                color: var(--text-tertiary);
+                opacity: 0.5;
+              "></i>
+              <h3 style="font-size: 18px; font-weight: 600; color: var(--text-secondary); margin: 0 0 8px 0;">
+                Start Building Your Strategy
+              </h3>
+              <p style="font-size: 14px; color: var(--text-tertiary); margin: 0;">
+                Drag components from the left panel onto the canvas
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Code Editor View -->
+        <div class="code-editor-view" id="codeEditorView">
+          <div class="code-editor-toolbar">
+            <div class="code-editor-toolbar-left">
+              <select class="language-selector" id="languageSelector" onchange="updateCodeLanguage()">
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="json">JSON</option>
+              </select>
+              <span style="font-size: 12px; color: var(--text-tertiary);">
+                Write your strategy code or import from file
+              </span>
+            </div>
+            <div class="code-editor-toolbar-right">
+              <button class="btn btn-sm btn-ghost" onclick="formatCode()" title="Format Code">
+                <i data-lucide="align-left"></i>
+              </button>
+              <button class="btn btn-sm btn-secondary" onclick="syncCodeToVisual()" title="Visualize Code">
+                <i data-lucide="eye"></i>
+                Visualize
+              </button>
+            </div>
+          </div>
+          <div class="code-editor-container">
+            <textarea 
+              class="code-editor" 
+              id="codeEditor" 
+              placeholder="// Write your trading strategy code here...
+// Example:
+function tradingStrategy() {
+  const rsi = indicators.RSI(14);
+  
+  if (rsi < 30) {
+    actions.buy(10); // Buy when oversold
+  }
+  
+  if (rsi > 70) {
+    actions.sell(10); // Sell when overbought
+  }
+  
+  actions.stopLoss(5); // 5% stop loss
+}"
+              spellcheck="false"
+            ></textarea>
+          </div>
+        </div>
+        
+        <!-- Properties Panel -->
+        <div class="properties-panel" id="propertiesPanel">
+          <div class="empty-state" style="padding: var(--space-8) var(--space-4);">
+            <i data-lucide="settings" style="width: 48px; height: 48px; margin: 0 auto var(--space-4); display: block; color: var(--text-tertiary);"></i>
+            <h3 style="font-size: 16px; margin-bottom: var(--space-2);">No Node Selected</h3>
+            <p style="font-size: 13px; color: var(--text-secondary);">Select a node to view and edit its properties</p>
+          </div>
+        </div>
+        
+        <!-- Console Panel -->
+        <div class="console-panel">
+          <div class="console-header">
+            <div class="console-title">
+              <i data-lucide="terminal"></i>
+              Testing Console
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-sm btn-ghost" onclick="clearConsole()">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+          </div>
+          <div class="console-content" id="consoleContent">
+            <div class="console-log">
+              <span class="console-time">00:00:00</span>
+              <span>Strategy builder initialized. Drag components to canvas to build your strategy.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="lucide-icons.js"></script>
+  <script src="sidebar-nav.js"></script>
+  <script src="bot-builder-engine.js"></script>
+  
+  <script>
+    // Initialize Lucide icons after page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+      initializePage();
+    }
+    
+    function initializePage() {
+      // Wait a bit for all scripts to load
+      setTimeout(() => {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+          console.log('Lucide icons initialized');
+        } else {
+          console.error('Lucide library not loaded');
+        }
+      }, 100);
+    }
+    
+    // View switching functionality
+    let currentView = 'visual'; // 'visual', 'code', or 'split'
+    
+    function switchView(view) {
+      currentView = view;
+      const canvasArea = document.getElementById('canvasArea');
+      const codeEditorView = document.getElementById('codeEditorView');
+      const importBtn = document.getElementById('importCodeBtn');
+      const exportBtn = document.getElementById('exportCodeBtn');
+      const subtitle = document.getElementById('modeSubtitle');
+      const viewBtns = document.querySelectorAll('.view-toggle-btn');
+      
+      // Update active button
+      viewBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+      
+      // Switch views
+      if (view === 'visual') {
+        canvasArea.classList.remove('hidden');
+        codeEditorView.classList.remove('active');
+        importBtn.style.display = 'none';
+        exportBtn.style.display = 'none';
+        subtitle.textContent = 'Drag & drop strategy editor';
+      } else if (view === 'code') {
+        canvasArea.classList.add('hidden');
+        codeEditorView.classList.add('active');
+        importBtn.style.display = 'flex';
+        exportBtn.style.display = 'flex';
+        subtitle.textContent = 'Code your strategy';
+        syncVisualToCode();
+      } else if (view === 'split') {
+        // TODO: Implement split view
+        alert('Split view coming soon! For now, use Visual or Code mode.');
+        switchView('visual');
+        return;
+      }
+      
+      // Refresh icons after view change
+      setTimeout(() => {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }, 50);
+    }
+    
+    // Sync visual nodes to code
+    function syncVisualToCode() {
+      if (!botBuilder) return;
+      
+      const code = generateCodeFromNodes(botBuilder.nodes);
+      document.getElementById('codeEditor').value = code;
+      botBuilder.logConsole('Visual strategy converted to code', 'success');
+    }
+    
+    // Generate code from nodes
+    function generateCodeFromNodes(nodes) {
+      if (nodes.length === 0) {
+        return `// No nodes on canvas yet.\n// Add nodes in Visual mode, then switch to Code to see the generated strategy.`;
+      }
+      
+      let code = `// Trading Strategy - Generated from Visual Builder\n`;
+      code += `// Created: ${new Date().toLocaleString()}\n\n`;
+      code += `function tradingStrategy() {\n`;
+      
+      // Group nodes by type
+      const triggers = nodes.filter(n => ['entry', 'price-above', 'price-below', 'crossover'].includes(n.type));
+      const indicators = nodes.filter(n => ['rsi', 'macd', 'bollinger'].includes(n.type));
+      const actions = nodes.filter(n => ['buy', 'sell', 'stop-loss'].includes(n.type));
+      
+      // Generate indicator declarations
+      if (indicators.length > 0) {
+        code += `  // Indicators\n`;
+        indicators.forEach(node => {
+          code += generateIndicatorCode(node);
+        });
+        code += `\n`;
+      }
+      
+      // Generate entry conditions
+      if (triggers.length > 0) {
+        code += `  // Entry Conditions\n`;
+        triggers.forEach(node => {
+          code += generateTriggerCode(node);
+        });
+        code += `\n`;
+      }
+      
+      // Generate actions
+      if (actions.length > 0) {
+        code += `  // Actions\n`;
+        actions.forEach(node => {
+          code += generateActionCode(node);
+        });
+      }
+      
+      code += `}\n\n`;
+      code += `// Execute strategy\ntradingStrategy();`;
+      
+      return code;
+    }
+    
+    function generateIndicatorCode(node) {
+      const config = node.config;
+      switch (node.type) {
+        case 'rsi':
+          return `  const rsi = indicators.RSI(${config.period || 14});\n`;
+        case 'macd':
+          return `  const macd = indicators.MACD(${config.fast || 12}, ${config.slow || 26}, ${config.signal || 9});\n`;
+        case 'bollinger':
+          return `  const bb = indicators.BollingerBands(${config.period || 20}, ${config.std || 2});\n`;
+        default:
+          return '';
+      }
+    }
+    
+    function generateTriggerCode(node) {
+      const config = node.config;
+      switch (node.type) {
+        case 'entry':
+          return `  // Manual entry trigger\n`;
+        case 'price-above':
+          return `  if (price > ${config.price || 1.08}) {\n    // Price crossed above threshold\n  }\n`;
+        case 'price-below':
+          return `  if (price < ${config.price || 1.08}) {\n    // Price crossed below threshold\n  }\n`;
+        case 'crossover':
+          return `  if (crossover(MA(${config.fast || 10}), MA(${config.slow || 20}))) {\n    // Moving average crossover detected\n  }\n`;
+        default:
+          return '';
+      }
+    }
+    
+    function generateActionCode(node) {
+      const config = node.config;
+      switch (node.type) {
+        case 'buy':
+          return `  actions.buy(${config.amount || 10});\n`;
+        case 'sell':
+          return `  actions.sell(${config.amount || 10});\n`;
+        case 'stop-loss':
+          return `  actions.stopLoss(${config.percentage || 5});\n`;
+        default:
+          return '';
+      }
+    }
+    
+    // Sync code to visual nodes
+    function syncCodeToVisual() {
+      const code = document.getElementById('codeEditor').value;
+      
+      if (!code.trim()) {
+        alert('No code to visualize. Write some code first!');
+        return;
+      }
+      
+      try {
+        const nodes = parseCodeToNodes(code);
+        
+        if (nodes.length === 0) {
+          alert('Could not extract nodes from code. Make sure you use the supported functions:\n\n- indicators.RSI(period)\n- indicators.MACD(fast, slow, signal)\n- actions.buy(amount)\n- actions.sell(amount)\n- actions.stopLoss(percentage)');
+          return;
+        }
+        
+        // Clear current canvas
+        botBuilder.nodes = [];
+        document.getElementById('canvasNodes').innerHTML = `
+          <div id="canvasEmptyState" style="display: none;"></div>
+        `;
+        
+        // Add nodes from code
+        nodes.forEach((node, index) => {
+          const x = 100 + (index % 3) * 220;
+          const y = 100 + Math.floor(index / 3) * 150;
+          botBuilder.createNode(node.type, x, y);
+          
+          // Apply configuration
+          if (node.config) {
+            const lastNode = botBuilder.nodes[botBuilder.nodes.length - 1];
+            lastNode.config = { ...lastNode.config, ...node.config };
+          }
+        });
+        
+        // Switch to visual mode
+        switchView('visual');
+        
+        botBuilder.logConsole(`Visualized ${nodes.length} nodes from code`, 'success');
+        
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      } catch (error) {
+        alert('Error parsing code: ' + error.message);
+        botBuilder.logConsole('Failed to parse code: ' + error.message, 'error');
+      }
+    }
+    
+    // Parse code to nodes (simple regex-based parser)
+    function parseCodeToNodes(code) {
+      const nodes = [];
+      
+      // Parse RSI
+      const rsiMatches = code.matchAll(/indicators\.RSI\((\d+)\)/g);
+      for (const match of rsiMatches) {
+        nodes.push({
+          type: 'rsi',
+          config: { period: parseInt(match[1]) }
+        });
+      }
+      
+      // Parse MACD
+      const macdMatches = code.matchAll(/indicators\.MACD\((\d+),\s*(\d+),\s*(\d+)\)/g);
+      for (const match of macdMatches) {
+        nodes.push({
+          type: 'macd',
+          config: { 
+            fast: parseInt(match[1]),
+            slow: parseInt(match[2]),
+            signal: parseInt(match[3])
+          }
+        });
+      }
+      
+      // Parse Bollinger Bands
+      const bbMatches = code.matchAll(/indicators\.BollingerBands\((\d+),\s*(\d+)\)/g);
+      for (const match of bbMatches) {
+        nodes.push({
+          type: 'bollinger',
+          config: { 
+            period: parseInt(match[1]),
+            std: parseInt(match[2])
+          }
+        });
+      }
+      
+      // Parse Buy actions
+      const buyMatches = code.matchAll(/actions\.buy\((\d+(?:\.\d+)?)\)/g);
+      for (const match of buyMatches) {
+        nodes.push({
+          type: 'buy',
+          config: { amount: parseFloat(match[1]) }
+        });
+      }
+      
+      // Parse Sell actions
+      const sellMatches = code.matchAll(/actions\.sell\((\d+(?:\.\d+)?)\)/g);
+      for (const match of sellMatches) {
+        nodes.push({
+          type: 'sell',
+          config: { amount: parseFloat(match[1]) }
+        });
+      }
+      
+      // Parse Stop Loss
+      const slMatches = code.matchAll(/actions\.stopLoss\((\d+(?:\.\d+)?)\)/g);
+      for (const match of slMatches) {
+        nodes.push({
+          type: 'stop-loss',
+          config: { percentage: parseFloat(match[1]) }
+        });
+      }
+      
+      // Parse price conditions
+      const priceAboveMatches = code.matchAll(/price\s*>\s*(\d+(?:\.\d+)?)/g);
+      for (const match of priceAboveMatches) {
+        nodes.push({
+          type: 'price-above',
+          config: { price: parseFloat(match[1]) }
+        });
+      }
+      
+      const priceBelowMatches = code.matchAll(/price\s*<\s*(\d+(?:\.\d+)?)/g);
+      for (const match of priceBelowMatches) {
+        nodes.push({
+          type: 'price-below',
+          config: { price: parseFloat(match[1]) }
+        });
+      }
+      
+      return nodes;
+    }
+    
+    // Import code from file
+    function importCodeFromFile() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.js,.py,.json,.txt';
+      
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          document.getElementById('codeEditor').value = event.target.result;
+          botBuilder.logConsole(`Imported code from ${file.name}`, 'success');
+          
+          // Auto-detect language
+          const ext = file.name.split('.').pop().toLowerCase();
+          const langSelector = document.getElementById('languageSelector');
+          if (ext === 'py') langSelector.value = 'python';
+          else if (ext === 'json') langSelector.value = 'json';
+          else langSelector.value = 'javascript';
+        };
+        reader.readAsText(file);
+      };
+      
+      input.click();
+    }
+    
+    // Export code to file
+    function exportCodeToFile() {
+      const code = document.getElementById('codeEditor').value;
+      const language = document.getElementById('languageSelector').value;
+      
+      let ext = 'txt';
+      let mimeType = 'text/plain';
+      
+      if (language === 'javascript') {
+        ext = 'js';
+        mimeType = 'application/javascript';
+      } else if (language === 'python') {
+        ext = 'py';
+        mimeType = 'text/x-python';
+      } else if (language === 'json') {
+        ext = 'json';
+        mimeType = 'application/json';
+      }
+      
+      const blob = new Blob([code], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trading-strategy.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      botBuilder.logConsole(`Exported code to trading-strategy.${ext}`, 'success');
+    }
+    
+    // Format code (simple indentation)
+    function formatCode() {
+      const editor = document.getElementById('codeEditor');
+      let code = editor.value;
+      
+      // Simple formatting - proper indentation
+      const lines = code.split('\n');
+      let indent = 0;
+      const formatted = lines.map(line => {
+        const trimmed = line.trim();
+        
+        // Decrease indent for closing braces
+        if (trimmed.startsWith('}')) {
+          indent = Math.max(0, indent - 1);
+        }
+        
+        const indentedLine = '  '.repeat(indent) + trimmed;
+        
+        // Increase indent after opening braces
+        if (trimmed.endsWith('{')) {
+          indent++;
+        }
+        
+        return indentedLine;
+      }).join('\n');
+      
+      editor.value = formatted;
+      botBuilder.logConsole('Code formatted', 'success');
+    }
+    
+    function updateCodeLanguage() {
+      const lang = document.getElementById('languageSelector').value;
+      botBuilder.logConsole(`Language changed to ${lang}`, 'info');
+      // Language-specific features can be added here
+    }
+    
+    // Help modal
+    function showHelp() {
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s;
+      `;
+      
+      modal.innerHTML = `
+        <div style="
+          background: var(--bg-elevated);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 32px;
+          max-width: 600px;
+          max-height: 80vh;
+          overflow-y: auto;
+        ">
+          <h2 style="margin: 0 0 24px 0; display: flex; align-items: center; gap: 12px;">
+            <i data-lucide="help-circle" style="width: 28px; height: 28px; color: var(--primary);"></i>
+            Bot Builder Guide
+          </h2>
+          
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--primary);">Getting Started</h3>
+            <ul style="margin: 0; padding-left: 20px; line-height: 1.8; font-size: 14px;">
+              <li><strong>Visual Mode:</strong> Drag components from the left panel onto the canvas</li>
+              <li><strong>Code Mode:</strong> Write JavaScript/Python code for your strategy</li>
+              <li>Click a node to select and configure it</li>
+              <li>Drag node headers to reposition them</li>
+              <li>Switch between Visual and Code modes anytime</li>
+            </ul>
+          </div>
+          
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--primary);">View Modes</h3>
+            <div style="font-size: 13px; line-height: 1.8;">
+              <p style="margin: 0 0 8px 0;"><strong>Visual:</strong> Drag & drop interface for building strategies</p>
+              <p style="margin: 0 0 8px 0;"><strong>Code:</strong> Write custom code, import from files, or export strategies</p>
+              <p style="margin: 0;"><strong>Visualize:</strong> Convert code to visual nodes automatically</p>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--primary);">Keyboard Shortcuts</h3>
+            <div style="display: grid; gap: 8px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>Delete node</span>
+                <kbd style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; font-family: monospace;">Delete</kbd>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Deselect</span>
+                <kbd style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; font-family: monospace;">Esc</kbd>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Save strategy</span>
+                <kbd style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+S</kbd>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Clear canvas</span>
+                <kbd style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+K</kbd>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--primary);">Component Types</h3>
+            <div style="font-size: 13px; line-height: 1.8;">
+              <p style="margin: 0 0 8px 0;"><strong>Entry Conditions:</strong> Triggers that start your strategy</p>
+              <p style="margin: 0 0 8px 0;"><strong>Indicators:</strong> Technical analysis tools (RSI, MACD, etc.)</p>
+              <p style="margin: 0;"><strong>Actions:</strong> What happens when conditions are met</p>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--primary);">Code API Reference</h3>
+            <div style="font-size: 12px; font-family: monospace; background: var(--bg-secondary); padding: 12px; border-radius: 8px; line-height: 1.8;">
+              <div style="color: var(--positive); font-weight: 600;">// Indicators</div>
+              indicators.RSI(period)<br>
+              indicators.MACD(fast, slow, signal)<br>
+              indicators.BollingerBands(period, std)<br><br>
+              
+              <div style="color: var(--positive); font-weight: 600;">// Actions</div>
+              actions.buy(amount)<br>
+              actions.sell(amount)<br>
+              actions.stopLoss(percentage)<br><br>
+              
+              <div style="color: var(--positive); font-weight: 600;">// Conditions</div>
+              if (price > threshold) { ... }<br>
+              if (rsi < 30) { ... }
+            </div>
+          </div>
+          
+          <button 
+            class="btn btn-primary" 
+            style="width: 100%;"
+            onclick="this.closest('div').parentElement.remove()"
+          >
+            Got it!
+          </button>
+        </div>
+      `;
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
+      
+      document.body.appendChild(modal);
+      
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }
+  </script>
+  
+  <script>
+    // Final icon initialization - ensures all icons are rendered
+    window.addEventListener('load', function() {
+      // Give everything time to render
+      setTimeout(function() {
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+          console.log('✓ All Lucide icons initialized');
+        }
+      }, 200);
+    });
+    
+    // Also reinitialize when switching views or adding nodes
+    const originalCreateNode = window.botBuilder?.createNode;
+    if (originalCreateNode) {
+      window.botBuilder.createNode = function(...args) {
+        const result = originalCreateNode.apply(this, args);
+        if (typeof lucide !== 'undefined') {
+          setTimeout(() => lucide.createIcons(), 50);
+        }
+        return result;
+      };
+    }
+  </script>
+</body>
+</html>

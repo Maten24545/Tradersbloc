@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Speed Bot — Tradersbloc</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg"/>
+  <link rel="stylesheet" href="system-design.css"/>
+  <link rel="stylesheet" href="app-shell.css"/>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .speed-layout { display: flex; flex-direction: column; height: 100%; background: var(--surface-primary); }
+    .speed-metrics {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3);
+      padding: var(--space-4); background: var(--surface-elevated); border-bottom: 1px solid var(--border-subtle);
+    }
+    .metric-box { background: var(--surface-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); }
+    .metric-label { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-1); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .metric-value { font-size: var(--text-xl); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .metric-value.good { color: var(--state-positive); }
+    .metric-value.warning { color: var(--state-warning); }
+    .metric-value.error { color: var(--state-negative); }
+    .status-badge-bar { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-4) var(--space-3); background: var(--surface-elevated); }
+    .status-pill { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); background: var(--state-positive-bg); border: 1px solid rgba(16,185,129,0.3); border-radius: var(--radius-xl); font-size: var(--text-xs); font-weight: 600; color: var(--state-positive); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--state-positive); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .dashboard-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; background: var(--border-subtle); overflow: hidden; }
+    .panel { background: var(--surface-elevated); overflow-y: auto; display: flex; flex-direction: column; }
+    .panel-header { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: var(--surface-secondary); position: sticky; top: 0; z-index: 10; }
+    .panel-title { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin: 0; }
+    .panel-badge { padding: 3px 8px; background: var(--surface-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-sm); font-size: var(--text-xs); font-weight: 600; color: var(--text-secondary); }
+    .panel-content { flex: 1; padding: var(--space-3); overflow-y: auto; }
+    .event-item { padding: var(--space-3); background: var(--surface-secondary); border-radius: var(--radius-md); margin-bottom: var(--space-2); font-size: var(--text-sm); display: flex; gap: var(--space-3); }
+    .event-time { font-family: var(--font-mono); color: var(--text-tertiary); font-size: var(--text-xs); min-width: 64px; font-variant-numeric: tabular-nums; }
+    .event-type { font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .event-type.success { color: var(--state-positive); }
+    .event-type.error { color: var(--state-negative); }
+    .event-type.warning { color: var(--state-warning); }
+    .event-details { color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.4; }
+    .latency-chart { height: 160px; background: var(--surface-secondary); border-radius: var(--radius-md); margin-bottom: var(--space-3); position: relative; overflow: hidden; }
+    .chart-bars { display: flex; align-items: flex-end; justify-content: space-around; height: 100%; padding: var(--space-4); }
+    .bar { width: 6px; background: var(--accent-emerald); border-radius: 3px 3px 0 0; transition: height 0.3s; }
+    .bar.warning { background: var(--state-warning); }
+    .bar.error { background: var(--state-negative); }
+    .perf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); }
+    .perf-card { background: var(--surface-secondary); border: 1px solid var(--border-subtle); padding: var(--space-3); border-radius: var(--radius-md); text-align: center; }
+    .perf-label { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-1); text-transform: uppercase; letter-spacing: 0.05em; }
+    .perf-value { font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .bot-status-item { padding: var(--space-3); background: var(--surface-secondary); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
+    .bot-name { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .bot-meta { font-size: var(--text-xs); color: var(--text-tertiary); }
+    .indicator { padding: 3px 8px; border-radius: var(--radius-sm); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; }
+    .indicator.online { background: var(--state-positive-bg); color: var(--state-positive); }
+    .indicator.offline { background: var(--state-negative-bg); color: var(--state-negative); }
+    .indicator.latency { background: var(--surface-elevated); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .log-entry { padding: var(--space-2) var(--space-3); background: var(--surface-secondary); border-left: 3px solid var(--state-negative); margin-bottom: var(--space-2); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+    .log-timestamp { color: var(--text-tertiary); font-size: var(--text-xs); margin-bottom: 2px; font-family: var(--font-mono); }
+    .log-message { color: var(--state-negative); font-size: var(--text-xs); }
+    .no-errors { text-align: center; padding: var(--space-12) var(--space-4); }
+    @media (max-width: 1024px) { .speed-metrics { grid-template-columns: repeat(3, 1fr); } .dashboard-grid { grid-template-columns: 1fr; grid-template-rows: auto; } }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar">
+      <div class="topbar-left"><button class="sidebar-toggle"><i data-lucide="menu"></i></button><img src="logo.svg" alt="Tradersbloc" class="topbar-logo"/><span class="topbar-brand">Tradersbloc</span></div>
+      <div class="topbar-center"><span class="topbar-title">Speed Bot Monitor</span></div>
+      <div class="topbar-right"><button class="topbar-icon-btn"><i data-lucide="settings"></i></button><div class="user-menu"><button class="user-menu-trigger"><span class="user-avatar">T</span></button></div></div>
+    </header>
+    <aside class="sidebar"><nav class="sidebar-nav" id="sidebarNav"></nav></aside>
+    <main class="main-content">
+      <div class="speed-layout">
+        <div class="speed-metrics">
+          <div class="metric-box"><div class="metric-label">Avg Latency</div><div class="metric-value good" id="avgLatency">12ms</div></div>
+          <div class="metric-box"><div class="metric-label">Orders/Sec</div><div class="metric-value" id="ordersPerSec">8.4</div></div>
+          <div class="metric-box"><div class="metric-label">Success Rate</div><div class="metric-value good" id="successRate">99.7%</div></div>
+          <div class="metric-box"><div class="metric-label">Active Bots</div><div class="metric-value" id="activeBots">12</div></div>
+          <div class="metric-box"><div class="metric-label">Uptime</div><div class="metric-value" id="uptime">99.98%</div></div>
+        </div>
+        <div class="status-badge-bar"><div class="status-pill"><span class="status-dot"></span> All Systems Operational</div></div>
+        <div class="dashboard-grid">
+          <div class="panel">
+            <div class="panel-header"><h2 class="panel-title">Live Event Stream</h2><span class="panel-badge" id="eventCount">0 events</span></div>
+            <div class="panel-content" id="eventStream"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2 class="panel-title">Execution Latency</h2><span class="panel-badge">Last 60s</span></div>
+            <div class="panel-content">
+              <div class="latency-chart"><div class="chart-bars" id="latencyBars"></div></div>
+              <div class="perf-grid">
+                <div class="perf-card"><div class="perf-label">Min</div><div class="perf-value">8ms</div></div>
+                <div class="perf-card"><div class="perf-label">Max</div><div class="perf-value">24ms</div></div>
+                <div class="perf-card"><div class="perf-label">P95</div><div class="perf-value">18ms</div></div>
+                <div class="perf-card"><div class="perf-label">P99</div><div class="perf-value">22ms</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2 class="panel-title">Bot Health Status</h2><span class="panel-badge">12 active</span></div>
+            <div class="panel-content" id="botStatusList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h2 class="panel-title">Error Log</h2><span class="panel-badge" id="errorCount">0 errors</span></div>
+            <div class="panel-content" id="errorLog">
+              <div class="no-errors"><i data-lucide="check-circle" style="width:48px;height:48px;color:var(--state-positive);margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"></i><p style="margin:0;color:var(--text-secondary)">No errors detected</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared-components.js"></script>
+  <script>
+    lucide.createIcons();
+    const eventTypes = [
+      { type: 'ORDER_FILLED', class: 'success', symbol: 'BTC/USDT' },
+      { type: 'SIGNAL_DETECTED', class: '', symbol: 'ETH/USDT' },
+      { type: 'POSITION_OPENED', class: 'success', symbol: 'SOL/USDT' },
+      { type: 'STOP_TRIGGERED', class: 'warning', symbol: 'BNB/USDT' },
+      { type: 'ORDER_PLACED', class: '', symbol: 'XRP/USDT' }
+    ];
+    let events = []; const maxEvents = 50;
+    const bots = [
+      { id: 1, name: 'Grid Master Pro', status: 'online', latency: 11 }, { id: 2, name: 'MA Crossover', status: 'online', latency: 14 },
+      { id: 3, name: 'RSI Bounce', status: 'online', latency: 9 }, { id: 4, name: 'Scalper Pro', status: 'online', latency: 8 },
+      { id: 5, name: 'Breakout Hunter', status: 'online', latency: 13 }, { id: 6, name: 'VWAP Trader', status: 'online', latency: 16 },
+      { id: 7, name: 'Trend Follower', status: 'online', latency: 12 }, { id: 8, name: 'AI Predictor', status: 'online', latency: 19 },
+      { id: 9, name: 'Volume Scanner', status: 'online', latency: 10 }, { id: 10, name: 'Arbitrage Scout', status: 'online', latency: 7 },
+      { id: 11, name: 'Momentum King', status: 'online', latency: 15 }, { id: 12, name: 'DeFi Master', status: 'online', latency: 21 }
+    ];
+    function addEvent() {
+      const et = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const t = new Date().toTimeString().split(' ')[0];
+      events.unshift({ time: t, type: et.type, class: et.class, details: `${et.type.replace(/_/g,' ')} for ${et.symbol} at ${(Math.random()*50000+10000).toFixed(2)}` });
+      if (events.length > maxEvents) events.pop();
+      renderEvents();
+    }
+    function renderEvents() {
+      document.getElementById('eventStream').innerHTML = events.slice(0, 20).map(e => `
+        <div class="event-item"><div class="event-time">${e.time}</div><div><div class="event-type ${e.class}">${e.type}</div><div class="event-details">${e.details}</div></div></div>`).join('');
+      document.getElementById('eventCount').textContent = `${events.length} events`;
+    }
+    function renderBotStatus() {
+      document.getElementById('botStatusList').innerHTML = bots.map(b => `
+        <div class="bot-status-item">
+          <div><div class="bot-name">${b.name}</div><div class="bot-meta">Last trade: ${Math.floor(Math.random()*60)}s ago</div></div>
+          <div style="display:flex;gap:var(--space-1)"><span class="indicator ${b.status}">${b.status}</span><span class="indicator latency">${b.latency}ms</span></div>
+        </div>`).join('');
+    }
+    function renderLatencyBars() {
+      let html = '';
+      for (let i = 0; i < 40; i++) {
+        const l = Math.random()*30+5; const h = (l/35)*100; let cls = '';
+        if (l > 25) cls = 'error'; else if (l > 18) cls = 'warning';
+        html += `<div class="bar ${cls}" style="height:${h}%"></div>`;
+      }
+      document.getElementById('latencyBars').innerHTML = html;
+    }
+    function updateMetrics() {
+      document.getElementById('avgLatency').textContent = Math.floor(Math.random()*8+8) + 'ms';
+      document.getElementById('ordersPerSec').textContent = (Math.random()*4+6).toFixed(1);
+      document.getElementById('successRate').textContent = (99.5+Math.random()*0.5).toFixed(1) + '%';
+    }
+    renderBotStatus(); renderLatencyBars();
+    setInterval(addEvent, 2000); setInterval(renderLatencyBars, 1000); setInterval(updateMetrics, 3000);
+    setInterval(() => { bots.forEach(b => b.latency = Math.floor(Math.random()*15+7)); renderBotStatus(); }, 4000);
+  </script>
+</body>
+</html>

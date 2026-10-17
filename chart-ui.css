@@ -1,0 +1,304 @@
+/* ═══════════════════════════════════════════════════════════════
+   CHART UI - 3-Column Layout with Left Toolbar
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Main Platform Layout */
+.platform-layout {
+  display: grid;
+  grid-template-columns: 72px 1fr 360px;
+  height: calc(100vh - 58px - 42px);  /* topbar 58px + tools-navbar 42px */
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEFT TOOLBAR (Drawing Tools)
+   ═══════════════════════════════════════════════════════════════ */
+
+.left-toolbar {
+  background: #0d0f18;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Tool button group */
+.ltb-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 0 8px;
+}
+
+/* Tool button */
+.ltb-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text2, #8890a8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  width: 56px;
+  min-height: 56px;
+}
+
+.ltb-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(0, 229, 160, 0.3);
+  color: var(--text, #f4f6fa);
+}
+
+.ltb-btn.active {
+  background: rgba(0, 229, 160, 0.12);
+  border-color: var(--primary, #00e5a0);
+  color: var(--primary, #00e5a0);
+}
+
+.ltb-btn.ltb-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ltb-btn.ltb-danger:hover {
+  background: rgba(255, 77, 106, 0.12);
+  border-color: var(--red, #ff4d6a);
+  color: var(--red, #ff4d6a);
+}
+
+/* Icon */
+.ltb-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Label */
+.ltb-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+/* Divider */
+.ltb-divider {
+  width: 40px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 8px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHART AREA WRAPPER
+   ═══════════════════════════════════════════════════════════════ */
+
+.chart-area-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: #080a10;
+  overflow: hidden;
+}
+
+/* Chart Toolbar */
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #0d0f18;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+/* Separator */
+.tb-sep {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Chart type buttons */
+.chart-type-wrap {
+  display: flex;
+  gap: 4px;
+}
+
+.ct-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text2, #8890a8);
+}
+
+.ct-btn:hover {
+  border-color: rgba(0, 229, 160, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ct-btn.active {
+  background: var(--primary, #00e5a0);
+  border-color: var(--primary, #00e5a0);
+  color: #000;
+}
+
+/* Indicator/Pattern buttons */
+.ind-pat-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.ip-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: var(--text2, #8890a8);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.ip-btn:hover {
+  border-color: rgba(0, 229, 160, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text, #f4f6fa);
+}
+
+.ip-btn i {
+  width: 14px;
+  height: 14px;
+}
+
+/* Chart drawing tools (OHLC, etc) */
+.chart-tools-right {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.ct-icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text2, #8890a8);
+}
+
+.ct-icon-btn:hover {
+  border-color: rgba(0, 229, 160, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text, #f4f6fa);
+}
+
+.ct-icon-btn i {
+  width: 16px;
+  height: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHART CONTAINER
+   ═══════════════════════════════════════════════════════════════ */
+
+.chart-panel {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  background: #080a10;
+}
+
+#chartContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .platform-layout {
+    grid-template-columns: 60px 1fr 320px;
+  }
+  
+  .ltb-btn {
+    width: 44px;
+    min-height: 44px;
+  }
+  
+  .ltb-label {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 768px) {
+  .platform-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  
+  .left-toolbar {
+    flex-direction: row;
+    padding: 8px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  .ltb-group {
+    flex-direction: row;
+    padding: 0;
+  }
+  
+  .ltb-divider {
+    width: 1px;
+    height: 40px;
+    margin: 0 8px;
+  }
+  
+  .chart-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .trade-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 50vh;
+    z-index: 100;
+  }
+}
